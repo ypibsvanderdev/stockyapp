@@ -1405,12 +1405,37 @@ function startBotLoop() {
     if (botLoop) clearInterval(botLoop);
     if (safetyLoop) clearInterval(safetyLoop);
 
+    const isMarketOpen = async () => {
+        const baseUrl = isPaper ? 'https://paper-api.alpaca.markets' : 'https://api.alpaca.markets';
+        try {
+            const resp = await fetch(`${baseUrl}/v2/clock`, {
+                headers: {
+                    'APCA-API-KEY-ID': brokerKey,
+                    'APCA-API-SECRET-KEY': brokerSecret
+                }
+            });
+            const clock = await resp.json();
+            return clock.is_open;
+        } catch (err) {
+            console.error("[CLOCK] Market sync error:", err);
+            return true; // Fallback to avoid stopping during glitch
+        }
+    };
+
     const executeSafety = async () => {
+        if (!await isMarketOpen()) {
+            if (botSettings.interval >= 10) addLog('[SYSTEM] Market Closed. Neural Guard in Standby.', 'system');
+            return;
+        }
         await monitorPositions();
     };
 
     const executeStrategy = async () => {
-        if (!accountData) return; // Guard 1: Connection
+        if (!accountData) return;
+
+        if (!await isMarketOpen()) {
+            return; // Silently standby for strategy
+        }
 
         // 1. Analyze Market (Centralized scoring)
         const candidates = [...STOCK_LIST].map(stock => {
