@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vander Market Pulse | Premium Trading Terminal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body class="dark-theme">
+    <div id="app">
+        <nav class="glass-nav">
+            <div class="logo">
+                <span class="vander-text">VANDER</span>
+                <span class="pulse-text">PULSE</span>
+            </div>
+            <div class="nav-links">
+                <button class="nav-btn active" data-tab="market">Terminal</button>
+                <button class="nav-btn" data-tab="strategy">Strategy</button>
+                <button class="nav-btn" data-tab="trade">Trading Hub</button>
+                <button class="nav-btn" data-tab="portfolio">Portfolio</button>
+                <button class="nav-btn" data-tab="guide">Academy</button>
+                <button class="nav-btn" data-tab="automation">PulseBot AI</button>
+            </div>
+
+            <div id="pinned-watchlist" class="pinned-watchlist">
+                <!-- Stars will appear here -->
+            </div>
+            <div class="status-pill">
+                <div class="live-blink"></div>
+                Market Live
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <!-- Market Terminal Tab -->
+            <section id="market-tab" class="tab-content active">
+                <div class="grid-layout">
+                    <div class="sidebar">
+                        <div class="card glass-card connection-card">
+                            <div class="card-header">
+                                <h3>Neural Link</h3>
+                                <span id="api-status" class="badge short-term">OFFLINE</span>
+                            </div>
+                            <div class="api-input-group">
+                                <input type="password" id="finnhub-key" placeholder="Enter Finnhub API Key...">
+                                <button id="connect-live-btn" class="btn-primary small">GO LIVE</button>
+                            </div>
+                            <p class="api-note">Get a free key at <a href="https://finnhub.io/"
+                                    target="_blank">Finnhub.io</a></p>
+                        </div>
+                        <div class="card glass-card">
+                            <h3>Trending Stocks</h3>
+                            <div id="stock-list" class="stock-scroll-list">
+                                <!-- Dynamic List -->
+                            </div>
+                        </div>
+
+                        <!-- WHALE TRACKER (DARK POOLS) -->
+                        <div class="card glass-card whale-tracker-card"
+                            style="margin-top: 1rem; border: 1px solid rgba(0, 162, 255, 0.3);">
+                            <div class="card-header">
+                                <h3 style="color: #00a2ff;">Whale Tracker 🐋</h3>
+                                <span class="badge" style="background: rgba(0, 162, 255, 0.1); color: #00a2ff;">DARK
+                                    POOL</span>
+                            </div>
+                            <div id="whale-feed" class="whale-feed">
+                                <p class="empty-msg">Scanning for institutional block trades...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="main-chart-area">
+                        <div class="card glass-card chart-container">
+                            <div class="chart-header">
+                                <div class="selected-stock-info">
+                                    <div class="symbol-header">
+                                        <h2 id="current-stock-name">---</h2>
+                                        <button id="pin-stock-btn" class="pin-btn" title="Add to Watchlist">★</button>
+                                    </div>
+                                    <span id="current-stock-price">$0.00</span>
+                                    <span id="current-stock-change" class="up">+0.00%</span>
+                                </div>
+                                <div class="prediction-box">
+                                    <span class="label">AI Chance to Rise</span>
+                                    <div class="meter">
+                                        <div id="rise-chance-bar" class="fill" style="width: 75%"></div>
+                                    </div>
+                                    <span id="rise-chance-text">75%</span>
+                                </div>
+                            </div>
+                            <div id="main-chart"></div>
+
+                            <!-- TECHNICAL OVERLAYS (RSI/MACD) -->
+                            <div class="indicator-grids">
+                                <div id="rsi-chart" class="sub-chart"></div>
+                                <div id="macd-chart" class="sub-chart"></div>
+                            </div>
+                        </div>
+
+                        <!-- Neural Sentiment Pulse -->
+                        <div class="card glass-card sentiment-container">
+                            <div class="card-header">
+                                <h3>Neural Sentiment Pulse</h3>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <div id="reddit-consensus" class="sentiment-badge neutral"
+                                        style="display:none; background: #ff4500; color: white;">REDDIT: NEUTRAL</div>
+                                    <div id="sentiment-indicator" class="sentiment-badge">ANALYZING...</div>
+                                </div>
+                            </div>
+                            <div id="sentiment-feed" class="sentiment-feed">
+                                <p class="empty-msg">Select a stock to sync neural news feed.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Strategy Tab -->
+            <section id="strategy-tab" class="tab-content">
+                <div class="strategy-grid">
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <span class="badge short-term">SHORT TERM</span>
+                            <h3>High-Velocity Scalps</h3>
+                        </div>
+                        <p class="strategy-desc">AI-powered 24h momentum tracking. Targets quick gains on trending
+                            assets.</p>
+                        <div id="short-term-list" class="rec-list">
+                            <!-- JS Content -->
+                        </div>
+                    </div>
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <span class="badge long-term">LONG TERM</span>
+                            <h3>Stability Dividends</h3>
+                        </div>
+                        <p class="strategy-desc">Deep fundamental analysis. Focused on high-market-cap assets with
+                            multi-year growth potential.</p>
+                        <div id="long-term-list" class="rec-list">
+                            <!-- JS Content -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trading Hub Tab -->
+            <section id="trade-tab" class="tab-content">
+                <div class="trading-layout">
+                    <!-- Sidebar: Asset Selector -->
+                    <div class="card glass-card asset-selector">
+                        <div class="card-header">
+                            <h3>Quick Select</h3>
+                            <input type="text" id="asset-search" placeholder="Search Symbol..." class="search-mini">
+                        </div>
+                        <div id="trade-asset-list" class="stock-scroll-list">
+                            <!-- JS Generated Stock List -->
+                        </div>
+                    </div>
+
+                    <!-- Main: Command Center -->
+                    <div class="trading-command-center">
+                        <div class="card glass-card trade-main-panel">
+                            <div class="trade-header-premium">
+                                <div class="symbol-large">
+                                    <h1 id="trade-stock-symbol">SELECT ASSET</h1>
+                                    <p id="trade-stock-name">Use sidebar to pick an asset</p>
+                                </div>
+                                <div class="price-large">
+                                    <h2 id="trade-stock-price">$0.00</h2>
+                                    <span id="trade-stock-change" class="badge">0.00%</span>
+                                </div>
+                            </div>
+
+                            <div class="execution-form">
+                                <div class="order-type-tabs">
+                                    <button class="order-btn active" data-type="market">MARKET</button>
+                                    <button class="order-btn disabled" disabled>LIMIT</button>
+                                    <button class="order-btn disabled" disabled>STOP</button>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Size (Shares)</label>
+                                        <input type="number" id="trade-qty" value="1" min="1">
+                                    </div>
+                                    <div class="est-total">
+                                        <label>Est. Total</label>
+                                        <span id="trade-est-total">$0.00</span>
+                                    </div>
+                                </div>
+                                <div class="trade-actions-premium">
+                                    <button id="manual-buy-btn" class="btn-buy">EXECUTE BUY</button>
+                                    <button id="manual-sell-btn" class="btn-sell">EXECUTE SELL</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card glass-card trade-status-panel">
+                            <div class="card-header">
+                                <h3>Execution Log</h3>
+                                <button class="btn-clear" id="clear-trade-logs">Clear</button>
+                            </div>
+                            <div id="trade-logs" class="logs-container">
+                                <p class="log-entry system">Neural Interface bypass engaged. Ready for manual input.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Portfolio Tab -->
+            <section id="portfolio-tab" class="tab-content">
+                <div class="portfolio-grid">
+                    <div class="card glass-card balance-card">
+                        <div class="card-header">
+                            <h3>Total Equity</h3>
+                            <button id="sync-portfolio-btn" class="btn-primary small"
+                                style="margin-left: auto; margin-right: 1rem;">SYNC NOW</button>
+                            <span class="badge long-term">
+                                <span class="heartbeat"></span> LIVE SYNC
+                            </span>
+                        </div>
+                        <h1 id="total-balance">$0.00</h1>
+                        <div class="balance-meta">
+                            <p id="total-profit-loss" class="profit">Connecting...</p>
+                            <div class="liquidity-badge">
+                                <span>Buying Power:</span>
+                                <strong id="buying-power">$0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card glass-card holdings-card">
+                        <h3>Pending Orders</h3>
+                        <div id="pending-list" class="stock-scroll-list">
+                            <p class="empty-msg">No active orders.</p>
+                        </div>
+                    </div>
+                    <div class="card glass-card holdings-card">
+                        <h3>Current Holdings</h3>
+                        <div id="holdings-list" class="stock-scroll-list">
+                            <!-- JS Content -->
+                            <p class="empty-msg">No active positions.</p>
+                        </div>
+                    </div>
+                    <div class="card glass-card history-card">
+                        <h3>Recent Activity</h3>
+                        <div id="history-list" class="stock-scroll-list">
+                            <!-- JS Content -->
+                            <p class="empty-msg">Waiting for trades...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Heatmap -->
+                <div class="card glass-card performance-section">
+                    <div class="card-header">
+                        <h3>Trade Performance Heatmap</h3>
+                        <p class="api-note">Neural analysis of historical win/loss ratios</p>
+                    </div>
+                    <div id="performance-heatmap" class="heatmap-grid">
+                        <!-- Heatmap cells generated by JS -->
+                        <p class="empty-msg">Execute trades to generate neural heatmap data.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Academy Tab -->
+            <section id="guide-tab" class="tab-content">
+                <div class="guide-container">
+                    <div class="card glass-card guide-hero">
+                        <h1>Trading Academy</h1>
+                        <p>Master the markets from zero to hero.</p>
+                    </div>
+                    <div class="guide-grid">
+                        <div class="card glass-card guide-article">
+                            <h3>1. The Neural Scan (How it picks stocks)</h3>
+                            <p>Vander Pulse uses a multi-layered scoring system. It scans for <strong>Volume
+                                    Spikes</strong> (institutional entry) combined with <strong>RSI Reversals</strong>.
+                                When the AI score hits your threshold, it means the bot has confirmed a high-probability
+                                breakout is imminent.</p>
+                            <ul class="guide-list">
+                                <li><strong>Bullish Bias:</strong> Only enters when the 50-day moving average is
+                                    pointing UP.</li>
+                                <li><strong>Reddit Sentinel:</strong> Confirms if social volume matches price action to
+                                    avoid "fake" pumps.</li>
+                            </ul>
+                        </div>
+                        <div class="card glass-card guide-article">
+                            <h3>2. The Wealth Protocol (All-In Logic)</h3>
+                            <p>In "Unrestricted Wealth" mode, the bot is tuned for <strong>Maximum Velocity</strong>. It
+                                uses 100% of your capital because every second your cash is idle, you are losing profit.
+                                By diversifying into 5 high-confidence trades at 20% each, we maximize account growth
+                                while spreading risk.</p>
+                        </div>
+                        <div class="card glass-card guide-article">
+                            <h3>3. The Immortal Shield (How it protects profit)</h3>
+                            <p>This is the most critical feature. The <strong>Break-Even Guard</strong> triggers at +1%
+                                profit. The moment you are winning, our bot moves your stop-loss to +0.5%. This makes
+                                the trade mathematically "Risk-Free." You either win big, or you walk away with a small
+                                gain. You never lose a winner.</p>
+                        </div>
+                        <div class="card glass-card guide-article">
+                            <h3>4. Exit Strategy: Catching the Moon</h3>
+                            <p>Instead of selling at a fixed 5% gain, the bot uses a <strong>Trailing Stop</strong>. It
+                                follows the price up as high as it goes. If a stock flies +50%, the bot stays in the
+                                trade. It only exits when the price dips 1.5% from the highest point, ensuring you catch
+                                the absolute peak of the pump.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Automation Tab -->
+            <section id="automation-tab" class="tab-content">
+                <div class="automation-hero">
+                    <div class="bot-icon pulse-glow">🤖</div>
+                    <h1>PulseBot AI: Brokerage Link</h1>
+                    <p>Direct Exchange Execution via Alpaca API</p>
+                </div>
+                <div class="setup-grid automation-grid-upgrade elite-grid">
+                    <div class="card glass-card">
+                        <h3>Broker Authentication</h3>
+                        <div class="automation-form">
+                            <div class="form-group">
+                                <label>Alpaca API Key</label>
+                                <input type="password" id="broker-key" placeholder="Enter Alpaca Key...">
+                            </div>
+                            <div class="form-group">
+                                <label>API Secret</label>
+                                <input type="password" id="broker-secret" placeholder="Enter Secret Key...">
+                            </div>
+                            <div class="toggle-group">
+                                <label class="switch">
+                                    <input type="checkbox" id="paper-mode" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span>Paper Trading Mode (Safety On)</span>
+                            </div>
+                            <button id="connect-broker-btn" class="btn-primary">LINK BROKERAGE</button>
+                        </div>
+                    </div>
+
+                    <div class="card glass-card">
+                        <h3>AI Strategy Settings</h3>
+                        <div class="automation-form">
+                            <div class="form-group">
+                                <label>Trade Quantity (Shares)</label>
+                                <input type="number" id="setting-qty" value="1" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Stop Loss (%)</label>
+                                <input type="number" id="setting-sl" value="2.0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Take Profit (%)</label>
+                                <input type="number" id="setting-tp" value="5.0" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>AI Confidence Threshold</label>
+                                <input type="number" id="setting-threshold" value="18" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Scan Interval (Seconds)</label>
+                                <input type="number" id="setting-interval" value="10" min="5">
+                            </div>
+                            <div class="form-group">
+                                <label>Risk Per Trade (% Equity)</label>
+                                <input type="number" id="setting-risk" value="2.0" step="0.1" min="0.1" max="100">
+                            </div>
+                            <div class="toggle-group" style="margin-top: 1rem;">
+                                <label class="switch">
+                                    <input type="checkbox" id="setting-trailing" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span>Trailing Stop Loss (Neural Shield)</span>
+                            </div>
+                            <div class="form-group"
+                                style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                                <label style="color: #7289da;">Discord Webhook URL (Phone Alerts)</label>
+                                <input type="password" id="setting-discord-webhook"
+                                    placeholder="Paste Discord Webhook URL...">
+                            </div>
+                            <p class="api-note">Settings save automatically to local storage.</p>
+                        </div>
+                    </div>
+
+                    <div class="card glass-card">
+                        <h3>Advanced Neural Controls</h3>
+                        <div class="automation-form">
+                            <div class="form-group">
+                                <label>Max Active Positions</label>
+                                <input type="number" id="setting-max-pos" value="5" min="1" max="50">
+                            </div>
+                            <div class="form-group">
+                                <label>Global Panic Stop (%)</label>
+                                <input type="number" id="setting-panic" value="10.0" step="0.5" min="1" max="50">
+                            </div>
+                            <div class="form-group">
+                                <label>Neural Trend Filter</label>
+                                <select id="setting-trend-filter">
+                                    <option value="any">Any Market Trend</option>
+                                    <option value="up" selected>Bullish Core Only (Up)</option>
+                                    <option value="down">Bearish Core Only (Down)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Asset Class Focus</label>
+                                <select id="setting-asset-focus">
+                                    <option value="any" selected>Full Market Spectrum</option>
+                                    <option value="large">Large-Cap Core Only</option>
+                                    <option value="mid">Mid-Cap Momentum</option>
+                                    <option value="small">Small-Cap Aggressive</option>
+                                </select>
+                            </div>
+                            <div class="toggle-group" style="margin-top: 1rem;">
+                                <label class="switch">
+                                    <input type="checkbox" id="setting-compound" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span>Profit Compounding (Auto-Scaling)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SOCIAL SENTINEL (REDDIT) -->
+                    <div class="card glass-card" style="border: 1px solid #ff4500;">
+                        <h3>Reddit Sentinel 🤖</h3>
+                        <div class="automation-form">
+                            <div class="toggle-group">
+                                <label class="switch">
+                                    <input type="checkbox" id="reddit-active" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span>Active Monitoring</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Target Subreddits (comma split)</label>
+                                <input type="text" id="reddit-subs" value="wallstreetbets,stocks,investing,options">
+                            </div>
+                            <div class="form-group">
+                                <label>Consensus Threshold (Posts)</label>
+                                <input type="number" id="reddit-threshold" value="5" min="1">
+                            </div>
+                            <div class="toggle-group">
+                                <label class="switch">
+                                    <input type="checkbox" id="pump-dump-lock" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                                <span>Lock Pumps & Dumps (Trend Following)</span>
+                            </div>
+                            <p class="api-note" style="color: #ff4500;">*Scans for hype, FOMO, and panic selling
+                                signals.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass-card" style="margin-top: 2rem;">
+                    <h3>Neural Command Center</h3>
+                    <div id="bot-logs" class="logs-container">
+                        <p class="log-entry system">Waiting for Brokerage handshake...</p>
+                    </div>
+                    <div class="automation-controls">
+                        <button id="start-bot" class="btn-bot" disabled>ENGAGE NEURAL TRADING</button>
+                        <button id="emergency-sell-btn" class="btn-primary danger-btn"
+                            style="margin-top: 1rem; width: 100%; display: none;">EMERGENCY SELL ALL</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="glass-footer">
+            <div class="ticker-wrap">
+                <div class="ticker" id="bottom-ticker">
+                    <!-- Ticker Content -->
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script type="module" src="./main.js"></script>
+</body>
+
+</html>
