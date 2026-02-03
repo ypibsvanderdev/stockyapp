@@ -19,14 +19,14 @@ const baseUrl = isPaper ? 'https://paper-api.alpaca.markets' : 'https://api.alpa
 // --- BOT SETTINGS ---
 const botSettings = {
     qty: 1,
-    stopLoss: 0.02,
-    takeProfit: 0.05,
-    threshold: 18,
-    interval: 10,
-    riskPct: 2.0,
-    trailingStop: true,
-    maxPositions: 5,
-    panicThreshold: 10.0,
+    stopLoss: 0.045,     // 4.5% Stop Loss (Consistent Survival)
+    takeProfit: 0.150,   // 15% Target (Wealth Scalability)
+    threshold: 70,       // Quality Signals
+    interval: 5,         // Fast Scan
+    riskPct: 5.0,        // 5% Account Risk
+    trailingStop: true,  // Profit Locking
+    maxPositions: 10,    // Diversified
+    panicThreshold: 10.0,// Total Safety Cap
     trendFilter: 'up',
     assetFocus: 'any',
     compound: true
