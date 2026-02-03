@@ -473,50 +473,39 @@
                 </div>
             </section>
 
-            <!-- Utilities Tab -->
-            <section id="utilities-tab" class="tab-content">
-                <div class="grid-layout">
-                    <!-- FEAR & GREED GAUGE -->
-                    <div class="card glass-card sentiment-card">
-                        <div class="card-header">
-                            <h3>Market Sentiment Radar</h3>
-                            <span class="badge neural-v3">Neural Pulse V3.0</span>
-                        </div>
-
-                        <div class="gauge-wrapper">
-                            <div class="gauge-container">
-                                <div class="gauge-track"></div>
-                                <div id="sentiment-needle" class="needle"></div>
-                                <div class="needle-pivot"></div>
-                                <div class="gauge-overlay"></div>
-                            </div>
-                            <div class="score-display">
-                                <h1 id="sentiment-score">50</h1>
-                                <div id="sentiment-status" class="status-label">Analyzing Market...</div>
-                            </div>
-                        </div>
-
-                        <div class="sentiment-breakdown">
-                            <div class="stat-pill">
-                                <span>Whale Force:</span>
-                                <span id="whale-force" class="val">Neutral</span>
-                            </div>
-                            <div class="stat-pill">
-                                <span>Volatility Index:</span>
-                                <span id="vix-proxy" class="val">Stable</span>
-                            </div>
-                            <div class="stat-pill">
-                                <span>Momentum Surge:</span>
-                                <span id="momentum-surge" class="val">0.0%</span>
-                            </div>
+            <!-- Media Hub Tab -->
+            <section id="media-tab" class="tab-content">
+                <div class="media-container card glass-card">
+                    <div class="media-header">
+                        <h2>Vander Media Hub 🎬</h2>
+                        <div class="media-filters">
+                            <span class="m-filter active" data-cat="all">All Channels</span>
+                            <span class="m-filter" data-cat="wins">Epic Wins</span>
+                            <span class="m-filter" data-cat="losses">Massive Losses</span>
+                            <span class="m-filter" data-cat="reactions">Live Reactions</span>
                         </div>
                     </div>
 
-                    <!-- RECENT WHALE LOG (Mini Version) -->
-                    <div class="card glass-card">
-                        <h3>Deep Pool Monitoring</h3>
-                        <div id="util-whale-log" class="util-log-container">
-                            <!-- Small whale logs here -->
+                    <div id="media-grid" class="media-grid">
+                        <!-- Dynamic Highlights will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Neural Replay Modal -->
+                <div id="media-modal" class="media-modal">
+                    <div class="modal-content glass-card">
+                        <span class="close-modal">&times;</span>
+                        <div class="video-placeholder">
+                            <div class="play-icon">▶</div>
+                            <p>Neural Replay Stream Active...</p>
+                        </div>
+                        <div class="modal-info">
+                            <h3 id="modal-title">Trade Highlight</h3>
+                            <p id="modal-desc">Loading metadata from blockchain...</p>
+                            <div class="modal-stats">
+                                <span id="modal-stat-1" class="badge short-term">PnL: +18.4%</span>
+                                <span id="modal-stat-2" class="badge long-term">Vol: $4.2M</span>
+                            </div>
                         </div>
                     </div>
                 </div>
