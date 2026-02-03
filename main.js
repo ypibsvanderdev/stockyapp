@@ -81,17 +81,17 @@ let pendingOrders = [];
 let watchlist = JSON.parse(localStorage.getItem('vander_watchlist') || '[]');
 let tradeHistory = JSON.parse(localStorage.getItem('vander_performance') || '{}');
 
-// AI Strat Settings (UNRESTRICTED WEALTH - Maximum Performance Config)
+// AI Strat Settings (GOLDEN RATIO - Professional Wealth Management)
 let botSettings = {
     qty: 1,
-    stopLoss: 0.015,     // 1.5% Stop Loss (Immediate Capital Protection)
-    takeProfit: 0.900,   // 90% TARGET (Aiming for Moons)
-    threshold: 75,       // high confidence only
+    stopLoss: 0.045,     // 4.5% Stop Loss (Professional Breathing Room)
+    takeProfit: 0.150,   // 15% TARGET (Consistent Scaling)
+    threshold: 70,       // High quality signals
     interval: 5,         // fast scan
-    riskPct: 20.0,       // MAX BETS: 20% of account per trade
-    trailingStop: true,  // LOCKS IN PROFIT: Follows the price up
-    maxPositions: 5,     // Using 100% of capital (5 x 20%)
-    panicThreshold: 5.0, // Sell everything if total account drops 5%
+    riskPct: 5.0,        // 5% per trade (Account Longevity)
+    trailingStop: true,  // LOCKS IN PROFIT
+    maxPositions: 10,    // Diversified Portfolio
+    panicThreshold: 10.0,// Sell everything if total account drops 10%
     trendFilter: 'up',   // Only buy stocks moving UP
     assetFocus: 'any',
     compound: true       // REINVEST: Every win creates bigger positions
