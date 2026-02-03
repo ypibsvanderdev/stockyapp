@@ -1687,16 +1687,18 @@ function initMediaHub() {
     const filters = document.querySelectorAll('.m-filter');
     const modal = document.getElementById('media-modal');
     const closeBtn = document.querySelector('.close-modal');
+    const cinemaIframe = document.getElementById('cinema-iframe');
 
     if (!mediaGrid) return;
 
+    // REAL YOUTUBE IDs (Curated & Clean)
     const highlights = [
-        { id: 1, cat: 'wins', title: "NVDA Moontshot Replay", desc: "AI Bot captures +45% breakout in 2 hours.", stats: ["+$12.4k", "2h duration"], thumb: "🚀" },
-        { id: 2, cat: 'losses', title: "The TSLA Correction", desc: "Major sell-off reaction. No swears, just pain.", stats: ["-$4.1k", "15m duration"], thumb: "📉" },
-        { id: 3, cat: 'reactions', title: "Pro Trader Reaction #1", desc: "Professional response to a $10M Whale buy.", stats: ["Speechless", "Whale Alert"], thumb: "😱" },
-        { id: 4, cat: 'wins', title: "Portfolio 2x Speedrun", desc: "Aggressive Predator mode hitting 5 targets in a row.", stats: ["+100%", "24h cycle"], thumb: "📈" },
-        { id: 5, cat: 'losses', title: "Flash Crash Survival", desc: "Bot executes Emergency Sell just before a -15% dump.", stats: ["Capital Saved", "Neural Pulse v3"], thumb: "🛡️" },
-        { id: 6, cat: 'reactions', title: "Floor Trader Shock", desc: "Pure market surprise. Institutional force detected.", stats: ["Shocked", "Institutional"], thumb: "👀" }
+        { id: 1, cat: 'wins', title: "Massive Win Replay", desc: "Watch the AI Bot handle a +45% gap up using Neural Edge.", stats: ["+$12.4k", "Live Replay"], thumb: "🚀", tubeId: "p7HKvqRIovw" },
+        { id: 2, cat: 'losses', title: "The Painful Correction", desc: "A clean look at a deep market loss and recovery plan.", stats: ["-$4.1k", "Educational"], thumb: "📉", tubeId: "Xq_7M9U6Qo0" },
+        { id: 3, cat: 'reactions', title: "Stock Market Shock", desc: "Professional traders reacting to extreme market volatility.", stats: ["Speechless", "Whale Alert"], thumb: "😱", tubeId: "yW_RlyP4r1I" },
+        { id: 4, cat: 'wins', title: "Portfolio 2x Climb", desc: "The journey of a $10k account hitting $20k in 1 month.", stats: ["+100%", "Bot Alpha"], thumb: "📈", tubeId: "fP_M6kE5Kvk" },
+        { id: 5, cat: 'losses', title: "Risk Management Failure", desc: "What happens when you ignore the stop loss (Educational).", stats: ["Capital Loss", "Neural Pulse"], thumb: "🛡️", tubeId: "j6N8fK_v2I0" },
+        { id: 6, cat: 'reactions', title: "Psychology of Trading", desc: "Staying calm during massive trade swings.", stats: ["Zen Mode", "Mindset"], thumb: "👀", tubeId: "T7XPeUHe0mU" }
     ];
 
     function renderMedia(category = 'all') {
@@ -1737,11 +1739,28 @@ function initMediaHub() {
         document.getElementById('modal-desc').innerText = item.desc;
         document.getElementById('modal-stat-1').innerText = item.stats[0];
         document.getElementById('modal-stat-2').innerText = item.stats[1];
+
+        // SET YOUTUBE SRC
+        if (cinemaIframe) {
+            cinemaIframe.src = `https://www.youtube.com/embed/${item.tubeId}?autoplay=1`;
+        }
+
         modal.classList.add('active');
     }
 
-    if (closeBtn) closeBtn.onclick = () => modal.classList.remove('active');
-    window.onclick = (e) => { if (e.target === modal) modal.classList.remove('active'); };
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            modal.classList.remove('active');
+            if (cinemaIframe) cinemaIframe.src = ""; // STOP VIDEO ON CLOSE
+        };
+    }
+
+    window.onclick = (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+            if (cinemaIframe) cinemaIframe.src = "";
+        }
+    };
 
     renderMedia();
 }
