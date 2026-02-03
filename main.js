@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderHeatmap();
         initWatchlistLogic();
         initWhaleTracker();
-        initUtilities();
+        initMediaHub();
     } catch (err) {
         console.error("[CRITICAL] Initialization failed:", err);
     }
@@ -1681,81 +1681,67 @@ function initWhaleTracker() {
     }, 8000 + Math.random() * 5000);
 }
 
-// --- UTILITIES & SENTIMENT RADAR ---
-function initUtilities() {
-    const needle = document.getElementById('sentiment-needle');
-    const scoreEl = document.getElementById('sentiment-score');
-    const statusEl = document.getElementById('sentiment-status');
-    const utilWhaleLog = document.getElementById('util-whale-log');
+// --- MEDIA HUB & NEURAL REPLAYS ---
+function initMediaHub() {
+    const mediaGrid = document.getElementById('media-grid');
+    const filters = document.querySelectorAll('.m-filter');
+    const modal = document.getElementById('media-modal');
+    const closeBtn = document.querySelector('.close-modal');
 
-    if (!needle) return;
+    if (!mediaGrid) return;
 
-    // Update Every 5 Seconds
-    setInterval(() => {
-        updateSentimentGauge(needle, scoreEl, statusEl);
-        updateUtilWhaleLog(utilWhaleLog);
-    }, 5000);
-
-    // Initial Update
-    updateSentimentGauge(needle, scoreEl, statusEl);
-}
-
-function updateSentimentGauge(needle, scoreEl, statusEl) {
-    let baseScore = 50;
-    if (botSettings.trendFilter === 'up') baseScore += 15;
-    if (botSettings.riskPct > 10) baseScore += 10;
-
-    const whaleImpact = Math.floor(Math.random() * 20);
-    const finalScore = Math.min(Math.max(baseScore + whaleImpact - 10, 5), 95);
-
-    const rotation = ((finalScore / 100) * 180) - 90;
-    needle.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
-
-    scoreEl.innerText = Math.round(finalScore);
-
-    if (finalScore > 80) {
-        statusEl.innerText = "Extreme Greed";
-        statusEl.style.color = "#00ff88";
-    } else if (finalScore > 60) {
-        statusEl.innerText = "Greed";
-        statusEl.style.color = "#99ff00";
-    } else if (finalScore > 40) {
-        statusEl.innerText = "Neutral";
-        statusEl.style.color = "#ffff00";
-    } else if (finalScore > 20) {
-        statusEl.innerText = "Fear";
-        statusEl.style.color = "#ff9900";
-    } else {
-        statusEl.innerText = "Extreme Fear";
-        statusEl.style.color = "#ff4d4d";
-    }
-
-    const whaleForceEl = document.getElementById('whale-force');
-    const vixProxyEl = document.getElementById('vix-proxy');
-    const momentumSurgeEl = document.getElementById('momentum-surge');
-
-    if (whaleForceEl) whaleForceEl.innerText = finalScore > 50 ? "Bullish" : "Corrective";
-    if (vixProxyEl) vixProxyEl.innerText = Math.random() > 0.5 ? "Low" : "Spiking";
-    if (momentumSurgeEl) momentumSurgeEl.innerText = ((finalScore / 10).toFixed(1)) + "%";
-}
-
-function updateUtilWhaleLog(container) {
-    if (!container) return;
-    container.innerHTML = '';
-
-    const mockWhales = [
-        { s: 'NVDA', v: '$4.2M', side: 'BUY' },
-        { s: 'AAPL', v: '$2.1M', side: 'BUY' },
-        { s: 'TSLA', v: '$1.8M', side: 'SELL' },
-        { s: 'AMD', v: '$0.9M', side: 'BUY' }
+    const highlights = [
+        { id: 1, cat: 'wins', title: "NVDA Moontshot Replay", desc: "AI Bot captures +45% breakout in 2 hours.", stats: ["+$12.4k", "2h duration"], thumb: "🚀" },
+        { id: 2, cat: 'losses', title: "The TSLA Correction", desc: "Major sell-off reaction. No swears, just pain.", stats: ["-$4.1k", "15m duration"], thumb: "📉" },
+        { id: 3, cat: 'reactions', title: "Pro Trader Reaction #1", desc: "Professional response to a $10M Whale buy.", stats: ["Speechless", "Whale Alert"], thumb: "😱" },
+        { id: 4, cat: 'wins', title: "Portfolio 2x Speedrun", desc: "Aggressive Predator mode hitting 5 targets in a row.", stats: ["+100%", "24h cycle"], thumb: "📈" },
+        { id: 5, cat: 'losses', title: "Flash Crash Survival", desc: "Bot executes Emergency Sell just before a -15% dump.", stats: ["Capital Saved", "Neural Pulse v3"], thumb: "🛡️" },
+        { id: 6, cat: 'reactions', title: "Floor Trader Shock", desc: "Pure market surprise. Institutional force detected.", stats: ["Shocked", "Institutional"], thumb: "👀" }
     ];
 
-    mockWhales.forEach(w => {
-        const item = document.createElement('div');
-        item.style.padding = '8px';
-        item.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-        item.style.color = w.side === 'BUY' ? '#00ff88' : '#ff4d4d';
-        item.innerHTML = `[${w.side}] ${w.s} <span style="color:white; float:right;">${w.v}</span>`;
-        container.appendChild(item);
+    function renderMedia(category = 'all') {
+        mediaGrid.innerHTML = '';
+        const filtered = category === 'all' ? highlights : highlights.filter(h => h.cat === category);
+
+        filtered.forEach(h => {
+            const card = document.createElement('div');
+            card.className = 'media-card';
+            card.innerHTML = `
+                <div class="thumb-container">
+                    <span style="font-size: 3rem;">${h.thumb}</span>
+                    <div class="play-overlay"><div class="play-btn-circ">▶</div></div>
+                </div>
+                <div class="media-info">
+                    <h4>${h.title}</h4>
+                    <p>${h.desc}</p>
+                    <div class="media-tags">
+                        ${h.stats.map(s => `<span class="badge short-term" style="font-size:0.6rem;">${s}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+            card.onclick = () => openMediaModal(h);
+            mediaGrid.appendChild(card);
+        });
+    }
+
+    filters.forEach(f => {
+        f.onclick = () => {
+            filters.forEach(btn => btn.classList.remove('active'));
+            f.classList.add('active');
+            renderMedia(f.getAttribute('data-cat'));
+        };
     });
+
+    function openMediaModal(item) {
+        document.getElementById('modal-title').innerText = item.title;
+        document.getElementById('modal-desc').innerText = item.desc;
+        document.getElementById('modal-stat-1').innerText = item.stats[0];
+        document.getElementById('modal-stat-2').innerText = item.stats[1];
+        modal.classList.add('active');
+    }
+
+    if (closeBtn) closeBtn.onclick = () => modal.classList.remove('active');
+    window.onclick = (e) => { if (e.target === modal) modal.classList.remove('active'); };
+
+    renderMedia();
 }
