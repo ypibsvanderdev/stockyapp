@@ -1549,16 +1549,17 @@ async function monitorPositions() {
             const profitPct = parseFloat(pos.unrealized_plpc);
             if (isNaN(profitPct)) continue;
 
-            // --- BREAK EVEN GUARD: LOCK IN THE WIN ---
-            if (profitPct >= 0.01) {
-                // If in 1% profit, move stop loss to +0.5% (Can't lose money anymore)
-                botSettings.stopLoss = -0.005;
+            // --- LOCAL POSITION SHIELD ---
+            let currentStopLoss = botSettings.stopLoss;
+
+            // --- BREAK EVEN GUARD: PROTECT THE WIN ---
+            // If this specific position hits 1.5% profit, we move ITS stop loss to break-even (+0.5%)
+            if (profitPct >= 0.015) {
+                currentStopLoss = -0.005; // Tighten only for this trade
             }
 
             // --- ELITE NEURAL SHIELD: Trailing Stop Logic ---
             if (botSettings.trailingStop && profitPct > (botSettings.takeProfit / 2)) {
-                // If we are halfway to our profit target, we move the floor up.
-                // This is a simplified trailing stop simulator for the UI.
                 const currentPrice = parseFloat(pos.current_price);
                 const entryPrice = parseFloat(pos.avg_entry_price);
                 const newFloor = entryPrice + ((currentPrice - entryPrice) * 0.5);
@@ -1570,10 +1571,11 @@ async function monitorPositions() {
                         syncBrokerAccount();
                         trackPerformance(pos.symbol, parseFloat(pos.unrealized_pl));
                     }
-                    continue; // Skip standard SL/TP for this position
+                    continue;
                 }
             }
 
+            // Exit Logic 1: Take Profit
             if (profitPct >= botSettings.takeProfit) {
                 addLog(`[SHIELD] Target Reached! Selling ${pos.symbol} for +${(profitPct * 100).toFixed(2)}% profit.`, 'trade');
                 const result = await executeBrokerTrade(pos.symbol, pos.qty, 'sell');
@@ -1582,8 +1584,8 @@ async function monitorPositions() {
                     trackPerformance(pos.symbol, parseFloat(pos.unrealized_pl));
                 }
             }
-            // Safety Shield: Stop Loss
-            else if (profitPct <= -botSettings.stopLoss) {
+            // Exit Logic 2: Dynamic Stop Loss
+            else if (profitPct <= -currentStopLoss) {
                 addLog(`[SHIELD] Stop Loss Triggered on ${pos.symbol} at ${(profitPct * 100).toFixed(2)}% loss.`, 'warn');
                 const result = await executeBrokerTrade(pos.symbol, pos.qty, 'sell');
                 if (result.success) {
