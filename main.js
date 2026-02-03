@@ -132,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderHeatmap();
         initWatchlistLogic();
         initWhaleTracker();
+        initUtilities();
     } catch (err) {
         console.error("[CRITICAL] Initialization failed:", err);
     }
@@ -1678,4 +1679,83 @@ function initWhaleTracker() {
         feed.prepend(item);
         if (feed.children.length > 8) feed.lastElementChild.remove();
     }, 8000 + Math.random() * 5000);
+}
+
+// --- UTILITIES & SENTIMENT RADAR ---
+function initUtilities() {
+    const needle = document.getElementById('sentiment-needle');
+    const scoreEl = document.getElementById('sentiment-score');
+    const statusEl = document.getElementById('sentiment-status');
+    const utilWhaleLog = document.getElementById('util-whale-log');
+
+    if (!needle) return;
+
+    // Update Every 5 Seconds
+    setInterval(() => {
+        updateSentimentGauge(needle, scoreEl, statusEl);
+        updateUtilWhaleLog(utilWhaleLog);
+    }, 5000);
+
+    // Initial Update
+    updateSentimentGauge(needle, scoreEl, statusEl);
+}
+
+function updateSentimentGauge(needle, scoreEl, statusEl) {
+    let baseScore = 50;
+    if (botSettings.trendFilter === 'up') baseScore += 15;
+    if (botSettings.riskPct > 10) baseScore += 10;
+
+    const whaleImpact = Math.floor(Math.random() * 20);
+    const finalScore = Math.min(Math.max(baseScore + whaleImpact - 10, 5), 95);
+
+    const rotation = ((finalScore / 100) * 180) - 90;
+    needle.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
+
+    scoreEl.innerText = Math.round(finalScore);
+
+    if (finalScore > 80) {
+        statusEl.innerText = "Extreme Greed";
+        statusEl.style.color = "#00ff88";
+    } else if (finalScore > 60) {
+        statusEl.innerText = "Greed";
+        statusEl.style.color = "#99ff00";
+    } else if (finalScore > 40) {
+        statusEl.innerText = "Neutral";
+        statusEl.style.color = "#ffff00";
+    } else if (finalScore > 20) {
+        statusEl.innerText = "Fear";
+        statusEl.style.color = "#ff9900";
+    } else {
+        statusEl.innerText = "Extreme Fear";
+        statusEl.style.color = "#ff4d4d";
+    }
+
+    const whaleForceEl = document.getElementById('whale-force');
+    const vixProxyEl = document.getElementById('vix-proxy');
+    const momentumSurgeEl = document.getElementById('momentum-surge');
+
+    if (whaleForceEl) whaleForceEl.innerText = finalScore > 50 ? "Bullish" : "Corrective";
+    if (vixProxyEl) vixProxyEl.innerText = Math.random() > 0.5 ? "Low" : "Spiking";
+    if (momentumSurgeEl) momentumSurgeEl.innerText = ((finalScore / 10).toFixed(1)) + "%";
+}
+
+function updateUtilWhaleLog(container) {
+    if (!container) return;
+    container.innerHTML = '';
+
+    const mockWhales = [
+        { s: 'NVDA', v: '$4.2M', side: 'BUY' },
+        { s: 'AAPL', v: '$2.1M', side: 'BUY' },
+        { s: 'TSLA', v: '$1.8M', side: 'SELL' },
+        { s: 'AMD', v: '$0.9M', side: 'BUY' }
+    ];
+
+    mockWhales.forEach(w => {
+        const item = document.createElement('div');
+        item.style.padding = '8px';
+        item.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+        item.style.color = w.side === 'BUY' ? '#00ff88' : '#ff4d4d';
+        item.innerHTML = `[${w.side}] ${w.s} <span style="color:white; float:right;">${w.v}</span>`;
+        container.appendChild(item);
+    });
 }
