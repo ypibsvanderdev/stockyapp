@@ -242,6 +242,39 @@ function initAuthSystem() {
 
     if (!overlay) return;
 
+    // Check Session & AUTO-AUTH
+    const activeSession = localStorage.getItem('vander_session_active');
+    const sessionUser = localStorage.getItem('vander_current_user');
+
+    // AUTO-LOGIN Logic
+    if (activeSession === 'true' && sessionUser) {
+        overlay.style.display = 'none';
+
+        // Load Admin Keys if it's the Admin
+        if (sessionUser.toLowerCase() === 'yahia admin') {
+            brokerKey = atob(ADMIN_KEY_PAYLOAD);
+            brokerSecret = atob(ADMIN_SECRET_PAYLOAD);
+            document.body.classList.remove('auth-locked');
+            console.log("[AUTH] Admin Privileges Restored via Auto-Login.");
+
+            // Force Show Admin Tab
+            setTimeout(() => {
+                const adminBtn = document.getElementById('nav-admin-btn');
+                if (adminBtn) adminBtn.style.display = 'block';
+            }, 500);
+        }
+        // Load Custom Keys for other users
+        else {
+            const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
+            if (userDb[sessionUser]) {
+                brokerKey = userDb[sessionUser].key;
+                brokerSecret = userDb[sessionUser].secret;
+                document.body.classList.remove('auth-locked');
+            }
+        }
+        return;
+    }
+
     // Authenticate Logic & Body Lock
     if (activeSession !== 'true') {
         document.body.classList.add('auth-locked');
@@ -304,23 +337,11 @@ function initAuthSystem() {
                 <span style="color:#ffaa00">SEC:</span> ${secret || '???'}
             </div>
         `;
-        overlay.style.display = 'none';
-
-        // Load Admin Keys if it's the Admin
-        if (sessionUser === 'yahia admin') {
-            brokerKey = atob(ADMIN_KEY_PAYLOAD);
-            brokerSecret = atob(ADMIN_SECRET_PAYLOAD);
-            console.log("[AUTH] Admin Privileges Restored.");
-        }
-        // Load Custom Keys for other users
-        else {
-            const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
-            if (userDb[sessionUser]) {
-                brokerKey = userDb[sessionUser].key;
-                brokerSecret = userDb[sessionUser].secret;
-            }
-        }
-        return;
+        // The original overlay.style.display = 'none'; and key loading logic here is now handled by the auto-login block at the start of initAuthSystem.
+        // This function is primarily for rendering user items in the admin panel, not for initial authentication.
+        // So, the lines below are removed as they are redundant/incorrect in this context after the auto-auth changes.
+        // overlay.style.display = 'none';
+        // if (sessionUser === 'yahia admin') { ... } else { ... }
     }
 
     // Tab Logic
@@ -342,27 +363,32 @@ function initAuthSystem() {
 
     // Authenticate Logic
     btnLogin.onclick = () => {
-        const user = document.getElementById('login-user').value.trim();
-        const pass = document.getElementById('login-pass').value.trim();
+        const userInput = document.getElementById('login-user').value.trim();
+        const passInput = document.getElementById('login-pass').value.trim();
 
-        // 1. Check Admin
-        if (btoa(user) === ADMIN_ID && btoa(pass) === ADMIN_HASH) {
+        const userLower = userInput.toLowerCase();
+
+        // 1. Check Admin (Case Insensitive Username)
+        if (userLower === 'yahia admin' && btoa(passInput) === ADMIN_HASH) {
             msg.className = "auth-msg success";
             msg.innerText = "ADMIN ACCESS GRANTED via HWID...";
 
+            // Save normalized username
             setTimeout(() => {
-                loginSuccess(user, true);
+                loginSuccess('yahia admin', true);
             }, 1000);
             return;
         }
 
         // 2. Check Local Users
         const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
-        if (userDb[user] && userDb[user].pass === btoa(pass)) {
+        const storedUser = Object.keys(userDb).find(u => u.toLowerCase() === userLower); // Case insensitive match
+
+        if (storedUser && userDb[storedUser].pass === btoa(passInput)) {
             msg.className = "auth-msg success";
             msg.innerText = "Identity Verified.";
             setTimeout(() => {
-                loginSuccess(user, false);
+                loginSuccess(storedUser, false);
             }, 800);
             return;
         }
@@ -380,13 +406,13 @@ function initAuthSystem() {
 
         if (!user || !pass || !key || !secret) {
             msg.className = "auth-msg error";
-            msg.innerText = "All fields required for initialization.";
+            msg.innerText = "All fields required.";
             return;
         }
 
-        if (btoa(user) === ADMIN_ID) {
+        if (user.toLowerCase() === 'yahia admin') {
             msg.className = "auth-msg error";
-            msg.innerText = "Username Reserved (Admin HWID Lock).";
+            msg.innerText = "Username Reserved (Admin Only).";
             return;
         }
 
@@ -419,7 +445,8 @@ function initAuthSystem() {
         if (isAdmin) {
             brokerKey = atob(ADMIN_KEY_PAYLOAD);
             brokerSecret = atob(ADMIN_SECRET_PAYLOAD);
-            // Enable Admin Panel UI if needed (logic can be added here)
+            const adminBtn = document.getElementById('nav-admin-btn');
+            if (adminBtn) adminBtn.style.display = 'block';
         } else {
             const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
             brokerKey = userDb[username].key;
