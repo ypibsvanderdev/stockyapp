@@ -1480,3 +1480,96 @@ input:checked+.slider:before {
     border-radius: 50% !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
+
+/* --- AUTHENTICATION OVERLAY --- */
+.auth-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(8, 10, 12, 0.95);
+    backdrop-filter: blur(20px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    width: 400px;
+    padding: 2.5rem;
+    box-shadow: 0 0 50px rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-header h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    color: white;
+    letter-spacing: -1px;
+}
+
+.auth-header p {
+    color: var(--primary);
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    margin-top: 0.5rem;
+}
+
+.auth-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+}
+
+.auth-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.auth-tab.active {
+    color: white;
+    border-bottom: 2px solid var(--primary);
+}
+
+.auth-msg {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+    min-height: 1.2rem;
+}
+
+.auth-msg.error {
+    color: #ff4d4d;
+}
+
+.auth-msg.success {
+    color: #00ff88;
+}
