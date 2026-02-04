@@ -79,6 +79,10 @@
                 <button class="nav-btn" data-tab="guide">Academy</button>
                 <button class="nav-btn" data-tab="automation">PulseBot AI</button>
                 <button class="nav-btn" data-tab="media">Media Hub</button>
+                <button class="nav-btn" data-tab="admin-panel" id="nav-admin-btn"
+                    style="display: none; color: #ff4d4d;">ADMIN</button>
+                <button class="nav-btn" id="logout-btn"
+                    style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 1rem; margin-left: 0.5rem;">LOGOUT</button>
             </div>
 
             <div id="pinned-watchlist" class="pinned-watchlist">
@@ -526,6 +530,7 @@
 
             <!-- Media Hub Tab -->
             <section id="media-tab" class="tab-content">
+                <!-- (Existing Media Content) -->
                 <div class="media-container card glass-card">
                     <div class="media-header">
                         <h2>Vander Media Hub 🎬</h2>
@@ -560,6 +565,63 @@
                                 </div>
                             </div>
                             <p id="modal-desc">Loading metadata from blockchain...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ADMIN PANEL TAB (Hidden) -->
+            <section id="admin-panel-tab" class="tab-content" style="display: none;">
+                <div class="admin-grid" style="display: grid; grid-template-columns: 350px 1fr; gap: 1.5rem;">
+                    <!-- User List -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <h3 style="color: #ff4d4d;">User Database</h3>
+                            <span class="badge short-term">ADMIN VIEW</span>
+                        </div>
+                        <div class="user-list-tools">
+                            <input type="text" placeholder="Search IP or User..." class="search-mini"
+                                style="margin-bottom: 1rem;">
+                        </div>
+                        <div id="admin-user-list" class="stock-scroll-list">
+                            <!-- JS Populated Users -->
+                            <p class="empty-msg">Scanning network nodes...</p>
+                        </div>
+                    </div>
+
+                    <!-- Surveillance Feed -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <h3>Live Surveillance</h3>
+                            <span class="badge long-term">ACTIVE SESSIONS: <span id="active-count">0</span></span>
+                        </div>
+                        <div class="surveillance-screen"
+                            style="height: 400px; background: black; border: 1px solid #333; display: flex; align-items: center; justify-content: center; position: relative;">
+                            <div id="no-target-msg" style="color: #444; font-family: monospace;">AWAITING TARGET
+                                SELECTION</div>
+                            <iframe id="spy-frame" src=""
+                                style="width: 100%; height: 100%; border: none; display: none; opacity: 0.7;"></iframe>
+                            <div class="spy-overlay"
+                                style="position: absolute; top: 10px; left: 10px; color: #00ff88; font-size: 0.8rem; font-family: monospace; display: none;">
+                                [REC] TARGET: <span id="spy-target-name">UNKNOWN</span><br>
+                                IP: <span id="spy-target-ip">192.168.X.X</span><br>
+                                SESSION: ACTIVE
+                            </div>
+                        </div>
+
+                        <!-- Control Actions -->
+                        <div class="admin-controls"
+                            style="margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <button id="btn-force-log" class="btn-primary"
+                                style="background: #ffaa00; color: black;">FORCE LOGOUT</button>
+                            <button id="btn-freeze-acc" class="btn-primary"
+                                style="background: #00a2ff; color: white;">FREEZE ASSETS</button>
+                            <button id="btn-ip-ban" class="btn-primary danger-btn">IP BAN</button>
+                        </div>
+                        <div style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                            <h4 style="margin-bottom: 0.5rem; color: var(--text-dim);">Remote Command Line</h4>
+                            <input type="text" placeholder="Inject JS Payload..."
+                                style="width: 100%; background: #000; border: 1px solid #333; padding: 0.8rem; color: #00ff88; font-family: 'JetBrains Mono';">
                         </div>
                     </div>
                 </div>
