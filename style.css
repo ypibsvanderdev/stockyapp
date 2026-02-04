@@ -1498,8 +1498,6 @@ input:checked+.slider:before {
     justify-content: center;
     overflow: hidden !important;
     /* Prevent scroll underneath */
-    touch-action: none !important;
-    /* Block touch gestures */
 }
 
 /* Hide main scrollbar when locked */
