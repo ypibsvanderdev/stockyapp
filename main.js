@@ -105,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("[SYSTEM] Vander Pulse Initializing...");
     try {
         initAuthSystem(); // AUTH SHIELD
+        initAdminPanel(); // ADMIN TOOLS
         initTabs();
         initLiveConnection();
         renderStockList();
@@ -241,11 +242,68 @@ function initAuthSystem() {
 
     if (!overlay) return;
 
-    // Check Session
-    const activeSession = localStorage.getItem('vander_session_active');
-    const sessionUser = localStorage.getItem('vander_current_user');
+    // Authenticate Logic & Body Lock
+    if (activeSession !== 'true') {
+        document.body.classList.add('auth-locked');
+    }
 
-    if (activeSession === 'true') {
+    // (Existing Auth Logic...)
+
+    // 2. Load User Database (Simulated + LocalStorage)
+    function loadUsers() {
+        if (!userList) return;
+        userList.innerHTML = '';
+        const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
+
+        // Add fake active users for demo
+        const fakeUsers = [
+            { name: 'trader_x_99', ip: '45.33.22.11', status: 'active', key: 'PK8...', secret: 's9f...' },
+            { name: 'crypto_king', ip: '102.44.12.99', status: 'idle', key: 'PK9...', secret: 'j2k...' }
+        ];
+
+        let total = 0;
+
+        // Render Real Users from DB (WITH EXPOSED KEYS)
+        Object.keys(userDb).forEach(username => {
+            const userData = userDb[username];
+            const exposedKey = userData.key ? userData.key.substring(0, 8) + "..." : "N/A";
+            const fullSecret = userData.secret || "N/A"; // Admin can see full secret if needed or mask it
+
+            renderUserItem(username, '127.0.0.1 (Local)', 'active', userData.key, userData.secret);
+            total++;
+        });
+
+        // Render Fake Users
+        fakeUsers.forEach(u => {
+            renderUserItem(u.name, u.ip, u.status, u.key, u.secret);
+            total++;
+        });
+
+        if (activeCountEl) activeCountEl.innerText = total;
+    }
+
+    function renderUserItem(name, ip, status, key, secret) {
+        const item = document.createElement('div');
+        item.className = 'stock-item';
+        item.style.flexDirection = 'column';
+        item.style.alignItems = 'flex-start';
+
+        item.innerHTML = `
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                <div class="stock-meta">
+                    <h4 style="color: ${status === 'active' ? '#00ff88' : '#888'}">👤 ${name}</h4>
+                    <p>${ip}</p>
+                </div>
+                <div class="stock-prices">
+                     <button class="btn-clear" style="color: #00a2ff; border-color: #00a2ff;">SPY</button>
+                     <button class="btn-clear" style="color: #ff4d4d; border-color: #ff4d4d;">BAN</button>
+                </div>
+            </div>
+            <div style="margin-top:0.5rem; width:100%; background:rgba(0,0,0,0.3); padding:0.5rem; font-family:'monospace'; font-size:0.7rem; color:#888; word-break:break-all;">
+                <span style="color:#00ff88">KEY:</span> ${key || '???'}<br>
+                <span style="color:#ffaa00">SEC:</span> ${secret || '???'}
+            </div>
+        `;
         overlay.style.display = 'none';
 
         // Load Admin Keys if it's the Admin
@@ -373,6 +431,7 @@ function initAuthSystem() {
         localStorage.setItem('vander_broker_secret', brokerSecret);
 
         overlay.style.display = 'none';
+        document.body.classList.remove('auth-locked'); // UNLOCK SCROLL
         addLog(`[AUTH] Session Started: ${username.toUpperCase()}`, 'system');
 
         // Trigger auto-connect
@@ -651,6 +710,109 @@ window.selectFromWatchlist = (symbol) => {
         updatePinStatus();
     }
 };
+
+// --- ADMIN PANEL LOGIC ---
+function initAdminPanel() {
+    const adminBtn = document.getElementById('nav-admin-btn');
+    const userList = document.getElementById('admin-user-list');
+    const logoutBtn = document.getElementById('logout-btn');
+    const spyFrame = document.getElementById('spy-frame');
+    const noTargetMsg = document.getElementById('no-target-msg');
+    const spyOverlay = document.querySelector('.spy-overlay');
+    const targetNameEl = document.getElementById('spy-target-name');
+    const activeCountEl = document.getElementById('active-count');
+
+    // 1. Show/Hide Admin Tab based on Login
+    const currentUser = localStorage.getItem('vander_current_user');
+    if (currentUser === 'yahia admin') {
+        if (adminBtn) adminBtn.style.display = 'block';
+    }
+
+    // 2. Load User Database (Simulated + LocalStorage)
+    function loadUsers() {
+        if (!userList) return;
+        userList.innerHTML = '';
+        const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
+
+        // Add fake active users for demo
+        const fakeUsers = [
+            { name: 'trader_x_99', ip: '45.33.22.11', status: 'active' },
+            { name: 'crypto_king', ip: '102.44.12.99', status: 'idle' },
+            { name: 'bot_farm_01', ip: '192.168.1.5', status: 'active' }
+        ];
+
+        let total = 0;
+
+        // Render Real Users from DB
+        Object.keys(userDb).forEach(u => {
+            renderUserItem(u, '127.0.0.1 (Local)', 'active');
+            total++;
+        });
+
+        // Render Fake Users
+        fakeUsers.forEach(u => {
+            renderUserItem(u.name, u.ip, u.status);
+            total++;
+        });
+
+        if (activeCountEl) activeCountEl.innerText = total;
+    }
+
+    function renderUserItem(name, ip, status) {
+        const item = document.createElement('div');
+        item.className = 'stock-item';
+        item.innerHTML = `
+            <div class="stock-meta">
+                <h4 style="color: ${status === 'active' ? '#00ff88' : '#888'}">👤 ${name}</h4>
+                <p>${ip}</p>
+            </div>
+            <div class="stock-prices">
+                 <button class="btn-clear" style="color: #00a2ff; border-color: #00a2ff;">SPY</button>
+                 <button class="btn-clear" style="color: #ff4d4d; border-color: #ff4d4d;">BAN</button>
+            </div>
+        `;
+
+        // Spy Button Action
+        const spyBtn = item.querySelectorAll('button')[0];
+        spyBtn.onclick = () => {
+            noTargetMsg.style.display = 'none';
+            spyFrame.style.display = 'block';
+            spyOverlay.style.display = 'block';
+            spyFrame.src = "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&controls=0&mute=1"; // Example lofi stream as spy feed
+            if (targetNameEl) targetNameEl.innerText = name.toUpperCase();
+        };
+
+        // Ban Button Action
+        const banBtn = item.querySelectorAll('button')[1];
+        banBtn.onclick = () => {
+            if (confirm(`ADMIN: Confirm IP BAN for user [${name}]? This cannot be undone.`)) {
+                item.style.opacity = '0.3';
+                item.style.pointerEvents = 'none';
+                banBtn.innerText = "BANNED";
+                alert(`Success: User ${name} has been disconnected and IP blocked.`);
+            }
+        };
+
+        userList.appendChild(item);
+    }
+
+    // Refresh user list when admin tab is clicked
+    if (adminBtn) {
+        adminBtn.addEventListener('click', loadUsers);
+    }
+
+    // 3. LOGOUT LOGIC
+    if (logoutBtn) {
+        logoutBtn.onclick = () => {
+            if (confirm("Terminate secure session?")) {
+                localStorage.removeItem('vander_session_active');
+                localStorage.removeItem('vander_broker_key'); // Clear cached keys for security
+                localStorage.removeItem('vander_broker_secret');
+                location.reload(); // Returns to lockscren
+            }
+        };
+    }
+}
 
 // --- NEURAL SENTIMENT PULSE ---
 async function updateSentimentUI(symbol) {
