@@ -104,6 +104,7 @@ let apiKey = localStorage.getItem('vander_neural_key') || 'd6002e9r01qihi8o0oa0d
 document.addEventListener('DOMContentLoaded', () => {
     console.log("[SYSTEM] Vander Pulse Initializing...");
     try {
+        initAuthSystem(); // AUTH SHIELD
         initTabs();
         initLiveConnection();
         renderStockList();
@@ -217,6 +218,165 @@ async function attemptAutoBroker() {
             addLog('[SYSTEM] Neural State Restored. Resuming automation...', 'system');
             startBotLoop();
         }
+    }
+}
+
+// --- AUTHENTICATION SYSTEM ---
+const ADMIN_HASH = "RW1hbjE2NSo="; // Eman165* (Base64)
+const ADMIN_ID = "eWFoaWEgYWRtaW4="; // yahia admin (Base64)
+
+// Admin Keys (Hardcoded for "yahia admin")
+const ADMIN_KEY_PAYLOAD = "UEsyRlRIQkVPNVozUTJDVENJRlVXRVZBSEo="; // PK2FTHBEO5Z3Q2CTCIFUWEVAHJ
+const ADMIN_SECRET_PAYLOAD = "QWR6UWFFNWZMdGp1NzRWU0tQTFJkdEpMNlFlM0JaNDNaVWZVcGlzN2JFSkY="; // AdzQaE5fLtju74VSKPLRdtJL6Qe3BZ43ZUfUpks7bEJF
+
+function initAuthSystem() {
+    const overlay = document.getElementById('auth-overlay');
+    const tabLogin = document.getElementById('tab-login');
+    const tabSignup = document.getElementById('tab-signup');
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const btnLogin = document.getElementById('btn-login');
+    const btnSignup = document.getElementById('btn-signup');
+    const msg = document.getElementById('auth-msg');
+
+    if (!overlay) return;
+
+    // Check Session
+    const activeSession = localStorage.getItem('vander_session_active');
+    const sessionUser = localStorage.getItem('vander_current_user');
+
+    if (activeSession === 'true') {
+        overlay.style.display = 'none';
+
+        // Load Admin Keys if it's the Admin
+        if (sessionUser === 'yahia admin') {
+            brokerKey = atob(ADMIN_KEY_PAYLOAD);
+            brokerSecret = atob(ADMIN_SECRET_PAYLOAD);
+            console.log("[AUTH] Admin Privileges Restored.");
+        }
+        // Load Custom Keys for other users
+        else {
+            const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
+            if (userDb[sessionUser]) {
+                brokerKey = userDb[sessionUser].key;
+                brokerSecret = userDb[sessionUser].secret;
+            }
+        }
+        return;
+    }
+
+    // Tab Logic
+    tabLogin.onclick = () => {
+        tabLogin.classList.add('active');
+        tabSignup.classList.remove('active');
+        loginForm.style.display = 'block';
+        signupForm.style.display = 'none';
+        msg.innerText = '';
+    };
+
+    tabSignup.onclick = () => {
+        tabSignup.classList.add('active');
+        tabLogin.classList.remove('active');
+        signupForm.style.display = 'block';
+        loginForm.style.display = 'none';
+        msg.innerText = '';
+    };
+
+    // Authenticate Logic
+    btnLogin.onclick = () => {
+        const user = document.getElementById('login-user').value.trim();
+        const pass = document.getElementById('login-pass').value.trim();
+
+        // 1. Check Admin
+        if (btoa(user) === ADMIN_ID && btoa(pass) === ADMIN_HASH) {
+            msg.className = "auth-msg success";
+            msg.innerText = "ADMIN ACCESS GRANTED via HWID...";
+
+            setTimeout(() => {
+                loginSuccess(user, true);
+            }, 1000);
+            return;
+        }
+
+        // 2. Check Local Users
+        const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
+        if (userDb[user] && userDb[user].pass === btoa(pass)) {
+            msg.className = "auth-msg success";
+            msg.innerText = "Identity Verified.";
+            setTimeout(() => {
+                loginSuccess(user, false);
+            }, 800);
+            return;
+        }
+
+        msg.className = "auth-msg error";
+        msg.innerText = "ACCESS DENIED: Invalid Credentials";
+    };
+
+    // Signup Logic
+    btnSignup.onclick = () => {
+        const user = document.getElementById('new-user').value.trim();
+        const pass = document.getElementById('new-pass').value.trim();
+        const key = document.getElementById('new-key').value.trim();
+        const secret = document.getElementById('new-secret').value.trim();
+
+        if (!user || !pass || !key || !secret) {
+            msg.className = "auth-msg error";
+            msg.innerText = "All fields required for initialization.";
+            return;
+        }
+
+        if (btoa(user) === ADMIN_ID) {
+            msg.className = "auth-msg error";
+            msg.innerText = "Username Reserved (Admin HWID Lock).";
+            return;
+        }
+
+        const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
+        if (userDb[user]) {
+            msg.className = "auth-msg error";
+            msg.innerText = "Identity already exists.";
+            return;
+        }
+
+        // Create User
+        userDb[user] = {
+            pass: btoa(pass),
+            key: key,
+            secret: secret
+        };
+        localStorage.setItem('vander_users', JSON.stringify(userDb));
+
+        msg.className = "auth-msg success";
+        msg.innerText = "Profile Created. Logging in...";
+        setTimeout(() => {
+            loginSuccess(user, false);
+        }, 1000);
+    };
+
+    function loginSuccess(username, isAdmin) {
+        localStorage.setItem('vander_session_active', 'true');
+        localStorage.setItem('vander_current_user', username);
+
+        if (isAdmin) {
+            brokerKey = atob(ADMIN_KEY_PAYLOAD);
+            brokerSecret = atob(ADMIN_SECRET_PAYLOAD);
+            // Enable Admin Panel UI if needed (logic can be added here)
+        } else {
+            const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
+            brokerKey = userDb[username].key;
+            brokerSecret = userDb[username].secret;
+        }
+
+        // Save visible key to local storage for the existing app logic to pick up
+        localStorage.setItem('vander_broker_key', brokerKey);
+        localStorage.setItem('vander_broker_secret', brokerSecret);
+
+        overlay.style.display = 'none';
+        addLog(`[AUTH] Session Started: ${username.toUpperCase()}`, 'system');
+
+        // Trigger auto-connect
+        attemptAutoBroker();
     }
 }
 
