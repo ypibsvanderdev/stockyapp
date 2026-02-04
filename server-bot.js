@@ -7,8 +7,8 @@
 
 // --- CONFIGURATION ---
 // Obfuscated Credentials (Base64) - Decoded at runtime
-const _k = 'UEtGVFhXVko1T1dRNk5XNVBGUEdBSUxONVI=';
-const _s = 'Q2I5dWlzejRoc3M4M1ZhUHJuVzR2cTlmQTh6Rkg1b2lrWG9kd3YzRG92TGo=';
+const _k = 'UEsyRlRIQkVPNVozUTJDVENJRlVXRVZBSEo=';
+const _s = 'QWR6UWFFNWZMdGp1NzRWU0tQTFJkdEpMNlFlM0JaNDNaVWZVcGlzN2JFSkY=';
 
 // Environment variables take precedence (for cloud security), falling back to embedded keys
 const brokerKey = process.env.APCA_API_KEY_ID || Buffer.from(_k, 'base64').toString('ascii');
@@ -43,6 +43,7 @@ const STOCK_LIST = [
     // ... (Compact list for server efficiency)
     { id: 'spy', name: 'S&P 500 ETF', symbol: 'SPY', price: 510.22, change: +0.2, trend: 'up', vol: 'low', cap: 'large' },
     { id: 'amd', name: 'Advanced Micro', symbol: 'AMD', price: 180.45, change: +3.2, trend: 'up', vol: 'high', cap: 'large' },
+    { id: 'sq', name: 'Block Inc', symbol: 'SQ', price: 82.33, change: +3.5, trend: 'up', vol: 'high', cap: 'mid' },
 ];
 
 // --- STATE ---
