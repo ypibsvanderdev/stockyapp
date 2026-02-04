@@ -15,6 +15,57 @@
 
 <body class="dark-theme">
     <div id="app">
+        <!-- AUTHENTICATION OVERLAY -->
+        <div id="auth-overlay" class="auth-overlay">
+            <div class="card glass-card auth-card">
+                <div class="auth-header">
+                    <h2>VANDER PULSE</h2>
+                    <p>SECURE TERMINAL ACCESS</p>
+                </div>
+
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="tab-login">LOGIN</button>
+                    <button class="auth-tab" id="tab-signup">NEW USER</button>
+                </div>
+
+                <div id="login-form">
+                    <div class="form-group">
+                        <label>Identity</label>
+                        <input type="text" id="login-user" placeholder="Username / ID">
+                    </div>
+                    <div class="form-group">
+                        <label>Passcode</label>
+                        <input type="password" id="login-pass" placeholder="••••••••">
+                    </div>
+                    <button id="btn-login" class="btn-primary"
+                        style="width: 100%; margin-top: 1rem;">AUTHENTICATE</button>
+                </div>
+
+                <div id="signup-form" style="display: none;">
+                    <div class="form-group">
+                        <label>Create Identity</label>
+                        <input type="text" id="new-user" placeholder="Username">
+                    </div>
+                    <div class="form-group">
+                        <label>Create Passcode</label>
+                        <input type="password" id="new-pass" placeholder="••••••••">
+                    </div>
+                    <div class="form-group"
+                        style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; margin-top: 1rem;">
+                        <label style="color: #00ff88;">Alpaca API Key (Required)</label>
+                        <input type="password" id="new-key" placeholder="PK...">
+                    </div>
+                    <div class="form-group">
+                        <label style="color: #00ff88;">Alpaca Secret Key</label>
+                        <input type="password" id="new-secret" placeholder="Secret...">
+                    </div>
+                    <button id="btn-signup" class="btn-primary" style="width: 100%; margin-top: 1rem;">INITIALIZE
+                        PROFILE</button>
+                </div>
+
+                <p id="auth-msg" class="auth-msg"></p>
+            </div>
+        </div>
         <nav class="glass-nav">
             <div class="logo">
                 <span class="vander-text">VANDER</span>
