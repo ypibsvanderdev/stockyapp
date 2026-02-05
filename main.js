@@ -12,6 +12,11 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 console.log("[FIREBASE] Cloud Database Active.");
 
+// --- ADMIN SECURE CONSTANTS ---
+const ADMIN_HASH = 'RW1hbjE2NSo='; // btoa('Eman165*')
+const ADMIN_KEY_PAYLOAD = 'UEtGVFhXVko1T1dRNk5XNVBGUEdBSUxONVI=';
+const ADMIN_SECRET_PAYLOAD = 'Q2I5dWlzejRoc3M4M1ZhUHJuVzR2cTlmQTh6Rkg1b2lrWG9kd3YzRG92TGo=';
+
 // --- MOCK DATA ---
 const STOCK_LIST = [
     { id: 'nvda', name: 'Nvidia Corp', symbol: 'NVDA', price: 924.31, change: +2.1, trend: 'up', vol: 'high', cap: 'large' },
@@ -299,12 +304,8 @@ window.liquidateAll = () => {
 };
 
 // --- AUTHENTICATION SYSTEM ---
-const ADMIN_HASH = "RW1hbjE2NSo="; // Eman165* (Base64)
-const ADMIN_ID = "eWFoaWEgYWRtaW4="; // yahia admin (Base64)
 
-// Admin Keys (Hardcoded for "yahia admin")
-const ADMIN_KEY_PAYLOAD = "UEsyRlRIQkVPNVozUTJDVENJRlVXRVZBSEo="; // PK2FTHBEO5Z3Q2CTCIFUWEVAHJ
-const ADMIN_SECRET_PAYLOAD = "QWR6UWFFNWZMdGp1NzRWU0tQTFJkdEpMNlFlM0JaNDNaVWZVcGlzN2JFSkY="; // AdzQaE5fLtju74VSKPLRdtJL6Qe3BZ43ZUfUpks7bEJF
+// --- AUTHENTICATION SYSTEM ---
 
 function initAuthSystem() {
     const overlay = document.getElementById('auth-overlay');
@@ -332,15 +333,11 @@ function initAuthSystem() {
             setTimeout(() => {
                 const adminBtn = document.getElementById('nav-admin-btn');
                 if (adminBtn) adminBtn.style.display = 'block';
-                // Start listening to DB if Admin
-                initAdminListener();
+                if (typeof initAdminListener === 'function') initAdminListener();
             }, 500);
         } else {
-            // For normal users, we try to fetch their keys from DB silently or use cached
-            // Ideally we re-fetch from DB to ensure they aren't banned
-            checkUserStatus(sessionUser);
+            document.body.classList.remove('auth-locked');
         }
-        return;
     } else {
         document.body.classList.add('auth-locked');
     }
@@ -362,59 +359,66 @@ function initAuthSystem() {
         msg.innerText = '';
     };
 
-    // --- CLOUD LOGIN ---
+    // --- HYBRID LOGIN LOGIC ---
     btnLogin.onclick = async () => {
         const userInput = document.getElementById('login-user').value.trim();
         const passInput = document.getElementById('login-pass').value.trim();
         const userLower = userInput.toLowerCase();
 
-        msg.innerText = "Verifying with Cloud Database...";
+        msg.innerText = "Verifying Identity...";
         msg.className = "auth-msg";
 
         // 1. Admin Bypass
         if (userLower === 'yahia admin' && btoa(passInput) === ADMIN_HASH) {
             msg.className = "auth-msg success";
-            msg.innerText = "ADMIN ACCESS GRANTED via HWID...";
+            msg.innerText = "ADMIN ACCESS GRANTED...";
             setTimeout(() => loginSuccess('yahia admin', true), 1000);
             return;
         }
 
         // 2. Cloud Query
+        let cloudSuccess = false;
         try {
             const snapshot = await db.collection('users').where('username', '==', userLower).get();
+            if (!snapshot.empty) {
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.pass === btoa(passInput) || data.pass === passInput) {
+                        cloudSuccess = true;
+                        if (data.status === 'banned') {
+                            msg.className = "auth-msg error";
+                            msg.innerText = "BANNED by Admin.";
+                        } else {
+                            msg.className = "auth-msg success";
+                            msg.innerText = "Identity Verified (Cloud).";
+                            setTimeout(() => loginSuccess(data.username, false, data), 800);
+                        }
+                    }
+                });
+            }
+        } catch (err) {
+            console.warn("Cloud Auth Failed, trying local:", err);
+        }
 
-            if (snapshot.empty) {
-                msg.className = "auth-msg error";
-                msg.innerText = "User not found in Cloud Database.";
+        if (cloudSuccess) return;
+
+        // 3. Local Storage Fallback
+        const userDb = JSON.parse(localStorage.getItem('vander_users') || '{}');
+        const storedUser = Object.keys(userDb).find(u => u.toLowerCase() === userLower);
+
+        if (storedUser) {
+            const localData = userDb[storedUser];
+            const localPass = localData.pass || localData.password;
+            if (localPass === btoa(passInput) || localPass === passInput) {
+                msg.className = "auth-msg success";
+                msg.innerText = "Identity Verified (Local).";
+                setTimeout(() => loginSuccess(storedUser, false, localData), 800);
                 return;
             }
-
-            let found = false;
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.pass === btoa(passInput)) {
-                    found = true;
-                    if (data.status === 'banned') {
-                        msg.className = "auth-msg error";
-                        msg.innerText = "CRITICAL: This HWID has been BANNED by Admin.";
-                    } else {
-                        msg.className = "auth-msg success";
-                        msg.innerText = "Identity Verified (Cloud Sync).";
-                        setTimeout(() => loginSuccess(data.username, false, data), 800);
-                    }
-                }
-            });
-
-            if (!found) {
-                msg.className = "auth-msg error";
-                msg.innerText = "Invalid Password.";
-            }
-
-        } catch (err) {
-            console.error(err);
-            msg.className = "auth-msg error";
-            msg.innerText = "Connection Error to Database.";
         }
+
+        msg.className = "auth-msg error";
+        msg.innerText = "Invalid Credentials.";
     };
 
     // --- CLOUD SIGNUP ---
@@ -436,26 +440,22 @@ function initAuthSystem() {
             return;
         }
 
-        msg.innerText = "Registering in global network...";
-
+        msg.innerText = "Registering...";
         try {
-            // Check existence
             const snapshot = await db.collection('users').where('username', '==', user.toLowerCase()).get();
             if (!snapshot.empty) {
                 msg.className = "auth-msg error";
-                msg.innerText = "Username taken globally.";
+                msg.innerText = "Username taken.";
                 return;
             }
 
-            // Get IP
-            let ip = "Unknown IP";
+            let ip = "Unknown";
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
                 ip = ipData.ip;
-            } catch (e) { console.warn("IP fetch failed"); }
+            } catch (e) { }
 
-            // Create Doc
             await db.collection('users').add({
                 username: user.toLowerCase(),
                 pass: btoa(pass),
@@ -468,28 +468,24 @@ function initAuthSystem() {
 
             msg.className = "auth-msg success";
             msg.innerText = "Profile Created. Logging in...";
-            setTimeout(() => {
-                loginSuccess(user, false, { key, secret });
-            }, 1000);
+            setTimeout(() => loginSuccess(user, false, { key, secret }), 1000);
 
         } catch (err) {
             console.error(err);
             msg.className = "auth-msg error";
-            msg.innerText = "Database Write Failed. Check Settings.";
+            msg.innerText = "Registration Failed.";
         }
     };
 
     async function checkUserStatus(username) {
-        // Re-validate session silently
         try {
             const qs = await db.collection('users').where('username', '==', username).get();
             qs.forEach(doc => {
                 const data = doc.data();
                 if (data.status === 'banned') {
-                    alert("YOUR ACCOUNT HAS BEEN BANNED BY ADMINISTRATOR.");
+                    alert("YOUR ACCOUNT HAS BEEN BANNED.");
                     logout();
                 } else {
-                    // Sync keys just in case
                     brokerKey = data.key;
                     brokerSecret = data.secret;
                     localStorage.setItem('vander_broker_key', brokerKey);
@@ -497,7 +493,7 @@ function initAuthSystem() {
                     document.body.classList.remove('auth-locked');
                 }
             });
-            if (qs.empty) document.body.classList.remove('auth-locked'); // Allow offline access if legacy
+            if (qs.empty) document.body.classList.remove('auth-locked');
         } catch (e) { document.body.classList.remove('auth-locked'); }
     }
 
@@ -510,12 +506,10 @@ function initAuthSystem() {
             brokerSecret = atob(ADMIN_SECRET_PAYLOAD);
             const adminBtn = document.getElementById('nav-admin-btn');
             if (adminBtn) adminBtn.style.display = 'block';
-            initAdminListener();
-        } else {
-            if (userData) {
-                brokerKey = userData.key;
-                brokerSecret = userData.secret;
-            }
+            if (typeof initAdminListener === 'function') initAdminListener();
+        } else if (userData) {
+            brokerKey = userData.key;
+            brokerSecret = userData.secret;
         }
 
         localStorage.setItem('vander_broker_key', brokerKey);
@@ -523,8 +517,7 @@ function initAuthSystem() {
 
         overlay.style.display = 'none';
         document.body.classList.remove('auth-locked');
-        addLog(`[AUTH] Cloud Connection Established: ${username.toUpperCase()}`, 'system');
-        attemptAutoBroker();
+        addLog(`[AUTH] Welcome, ${username.toUpperCase()}`, 'system');
     }
 }
 
