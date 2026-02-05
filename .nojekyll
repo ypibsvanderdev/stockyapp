@@ -1,0 +1,2 @@
+# Bypass Jekyll processing
+# This allows files starting with underscores and ensures JS deployment works.
