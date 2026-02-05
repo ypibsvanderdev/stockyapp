@@ -1,6 +1,29 @@
 // --- HYBRID AUTH SYSTEM PATCH ---
-// Overwrites the existing initAuthSystem to provide Cloud + Local fallback
-// and robust password checking.
+// Overwrites the existing initAuthSystem to provide Cloud + Local fallback.
+
+// 1. RE-DEFINE CRITICAL CONSTANTS (Fixes ReferenceError)
+const ADMIN_HASH = 'RW1hbjE2NSo='; // btoa('Eman165*')
+const ADMIN_KEY_PAYLOAD = 'UEtGVFhXVko1T1dRNk5XNVBGUEdBSUxONVI=';
+const ADMIN_SECRET_PAYLOAD = 'Q2I5dWlzejRoc3M4M1ZhUHJuVzR2cTlmQTh6Rkg1b2lrWG9kd3YzRG92TGo=';
+
+// 2. RE-CONNECT FIREBASE (Safely)
+let db;
+try {
+    if (typeof firebase !== 'undefined') {
+        // Check if already initialized in main.js
+        if (!firebase.apps.length) {
+            // Re-init if missing (Rare)
+            firebase.initializeApp({
+                apiKey: "AIzaSyAzPQe4vdjaJ-g44SOOFg9qOYsVZI3NnDo",
+                authDomain: "vander-pulse.firebaseapp.com",
+                projectId: "vander-pulse"
+            });
+        }
+        db = firebase.firestore();
+    }
+} catch (e) {
+    console.warn("[PATCH] Firebase Init Warning:", e);
+}
 
 function initAuthSystem() {
     console.log("[PATCH] Hybrid Auth System Loaded.");
