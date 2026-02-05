@@ -2483,3 +2483,19 @@ function initMediaHub() {
 
     renderMedia();
 }
+
+// --- BOOTSTRAP ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('[SYSTEM] Vander Pulse Booting...');
+    initAuthSystem();
+    initTabs();
+    initLiveConnection();
+    initWhaleTracker();
+    initMediaHub();
+    initBotSettingsUI();
+    setupManualTrading();
+    setupAutomation();
+    renderStockList();
+    renderStrategyLists();
+    updateDashboard(selectedStock);
+});
