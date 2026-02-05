@@ -280,3 +280,8 @@ function initAuthSystem() {
         attemptAutoBroker();
     }
 }
+
+// --- FORCE STARTUP ---
+window.initAuthSystem = initAuthSystem;
+document.addEventListener('DOMContentLoaded', initAuthSystem);
+if(document.readyState === 'interactive' || document.readyState === 'complete') initAuthSystem();
