@@ -1500,7 +1500,76 @@ input:checked+.slider:before {
     /* Prevent scroll underneath */
 }
 
-/* Hide main scrollbar when locked */
+/* --- NEWS TICKER --- */
+#news-ticker {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background: #000;
+    border-top: 1px solid #333;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    color: #00ff88;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+#news-ticker-content {
+    animation: tickerScroll 20s linear infinite;
+    padding-left: 100%;
+}
+
+@keyframes tickerScroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* --- PANIC BUTTON --- */
+#emergency-sell-btn {
+    background: #ff0000;
+    color: #fff;
+    border: 1px solid #ff4d4d;
+    box-shadow: 0 0 10px #ff0000;
+    animation: pulseRed 1s infinite alternate;
+}
+
+@keyframes pulseRed {
+    from {
+        box-shadow: 0 0 5px #ff0000;
+        opacity: 0.8;
+    }
+
+    to {
+        box-shadow: 0 0 20px #ff0000;
+        opacity: 1;
+    }
+}
+
+/* --- LOGS POLISH --- */
+.log-entry.trade {
+    border-left: 2px solid #00ff88;
+    background: rgba(0, 255, 136, 0.05);
+}
+
+.log-entry.warn {
+    border-left: 2px solid #ffaa00;
+}
+
+.log-entry.error {
+    border-left: 2px solid #ff0000;
+    background: rgba(255, 0, 0, 0.1);
+}
+
 body.auth-locked {
     overflow: hidden !important;
 }
